@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Solar Intelligence Dashboard</title>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background: #0f172a;
+      color: white;
+    }
+
+    h1 {
+      text-align: center;
+      padding: 20px;
+      color: #38bdf8;
+    }
+
+    .container {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 20px;
+      padding: 20px;
+    }
+
+    .card {
+      background: #1e293b;
+      padding: 20px;
+      border-radius: 15px;
+      box-shadow: 0 0 15px rgba(0,0,0,0.5);
+      transition: 0.3s;
+    }
+
+    .card:hover {
+      transform: scale(1.05);
+    }
+
+    .title {
+      font-size: 14px;
+      color: #94a3b8;
+    }
+
+    .value {
+      font-size: 28px;
+      font-weight: bold;
+      margin-top: 5px;
+    }
+
+    .status {
+      text-align: center;
+      font-size: 20px;
+      padding: 10px;
+      border-radius: 10px;
+    }
+
+    .normal { background: #22c55e; }
+    .monitor { background: #facc15; color: black; }
+    .clean { background: #ef4444; }
+
+    canvas {
+      background: #1e293b;
+      border-radius: 15px;
+      padding: 10px;
+    }
+  </style>
+</head>
+
+<body>
+
+<h1>☀ Solar Intelligence Dashboard</h1>
+
+<div class="container">
+
+  <div class="card">
+    <div class="title">Light</div>
+    <div class="value" id="light">--</div>
+  </div>
+
+  <div class="card">
+    <div class="title">Temperature</div>
+    <div class="value" id="temp">--</div>
+  </div>
+
+  <div class="card">
+    <div class="title">Humidity</div>
+    <div class="value" id="hum">--</div>
+  </div>
+
+  <div class="card">
+    <div class="title">Output</div>
+    <div class="value" id="output">--</div>
+  </div>
+
+</div>
+
+<div class="container">
+
+  <div class="card">
+    <div class="title">Status</div>
+    <div id="statusBox" class="status">--</div>
+  </div>
+
+  <div class="card">
+    <div class="title">Reason</div>
+    <div class="value" id="reason" style="font-size:16px;">--</div>
+  </div>
+
+  <div class="card">
+    <div class="title">Confidence</div>
+    <div class="value" id="confidence">--</div>
+  </div>
+
+</div>
+
+<div style="padding:20px;">
+  <canvas id="chart"></canvas>
+</div>
+
+<script>
+
+// 🔥 Firebase config
+const firebaseConfig = {
+  apiKey: "AIzaSyBxSJVwGXypLCFU6usgZ5Ghdtur6E6IObE",
+  databaseURL: "https://solar-intelligence-system-default-rtdb.firebaseio.com/"
+};
+
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+
+// 🔄 Live Data
+db.ref("solar_system/raw_data").limitToLast(1).on("value", snap => {
+  const data = Object.values(snap.val())[0];
+
+  document.getElementById("light").innerText = data.light.toFixed(2);
+  document.getElementById("temp").innerText = data.temp + "°C";
+  document.getElementById("hum").innerText = data.humidity + "%";
+  document.getElementById("output").innerText = data.output.toFixed(2);
+});
+
+// 🧠 AI Data
+db.ref("solar_system/intelligence").on("value", snap => {
+  const d = snap.val();
+
+  const statusBox = document.getElementById("statusBox");
+
+  statusBox.innerText = d.status;
+  document.getElementById("reason").innerText = d.reason;
+  document.getElementById("confidence").innerText = d.confidence;
+
+  statusBox.className = "status";
+
+  if (d.status.includes("NORMAL")) statusBox.classList.add("normal");
+  else if (d.status.includes("MONITOR")) statusBox.classList.add("monitor");
+  else statusBox.classList.add("clean");
+});
+
+// 📊 Chart
+let ctx = document.getElementById("chart").getContext("2d");
+
+let chart = new Chart(ctx, {
+  type: "line",
+  data: {
+    labels: [],
+    datasets: [{
+      label: "Output",
+      data: [],
+      borderColor: "#38bdf8",
+      tension: 0.3
+    }]
+  }
+});
+
+db.ref("solar_system/raw_data").limitToLast(20).on("value", snap => {
+  let values = snap.val();
+  let labels = [];
+  let data = [];
+
+  Object.keys(values).forEach(key => {
+    labels.push(key.substring(1,6));
+    data.push(values[key].output);
+  });
+
+  chart.data.labels = labels;
+  chart.data.datasets[0].data = data;
+  chart.update();
+});
+
+</script>
+
+</body>
+</html>
