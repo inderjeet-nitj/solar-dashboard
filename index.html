@@ -8,85 +8,40 @@
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
 
   <style>
-    body {
-      margin: 0;
-      font-family: system-ui;
-      background: #0b1220;
-      color: #e5e7eb;
-    }
+    body { margin:0; font-family:system-ui; background:#0b1220; color:#e5e7eb; }
 
-    .header {
-      display: flex;
-      justify-content: space-between;
-      padding: 16px 24px;
-      border-bottom: 1px solid #1f2937;
-    }
+    .header { display:flex; justify-content:space-between; padding:16px 24px; border-bottom:1px solid #1f2937; }
 
-    .section {
-      padding: 15px 20px;
-      border-top: 1px solid #1f2937;
-    }
+    .section { padding:15px 20px; border-top:1px solid #1f2937; }
 
-    .section-title {
-      font-size: 12px;
-      color: #9ca3af;
-      margin-bottom: 10px;
-    }
+    .section-title { font-size:12px; color:#9ca3af; margin-bottom:10px; }
 
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px,1fr));
-      gap: 14px;
-    }
+    .grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:14px; }
 
-    .card {
-      background: #111827;
-      border: 1px solid #1f2937;
-      border-radius: 8px;
-      padding: 14px;
-    }
+    .card { background:#111827; border:1px solid #1f2937; border-radius:8px; padding:14px; }
 
-    .title { font-size: 11px; color: #9ca3af; }
-    .value { font-size: 20px; font-weight: 600; }
+    .title { font-size:11px; color:#9ca3af; }
+    .value { font-size:20px; font-weight:600; }
 
-    .status {
-      text-align: center;
-      padding: 6px;
-      border-radius: 5px;
-    }
+    .status { text-align:center; padding:6px; border-radius:5px; }
 
-    .normal { background: #064e3b; }
-    .monitor { background: #78350f; }
-    .clean { background: #7f1d1d; }
+    .normal { background:#064e3b; }
+    .monitor { background:#78350f; }
+    .clean { background:#7f1d1d; }
 
-    .chart-container {
-      padding: 20px;
-    }
-
-    canvas {
-      background: #111827;
-      border: 1px solid #1f2937;
-      border-radius: 8px;
-      padding: 10px;
-    }
-
-    .toggle {
-      margin-bottom: 10px;
-    }
+    canvas { background:#111827; border:1px solid #1f2937; border-radius:8px; padding:10px; }
 
     .toggle button {
-      background: #1f2937;
-      border: none;
-      padding: 6px 10px;
-      margin-right: 5px;
-      color: white;
-      cursor: pointer;
-      border-radius: 5px;
+      background:#1f2937;
+      border:none;
+      padding:6px 10px;
+      margin-right:5px;
+      color:white;
+      cursor:pointer;
+      border-radius:5px;
     }
 
-    .toggle button.active {
-      background: #2563eb;
-    }
+    .toggle button.active { background:#2563eb; }
   </style>
 </head>
 
@@ -97,6 +52,7 @@
   <div>● Live</div>
 </div>
 
+<!-- OVERVIEW -->
 <div class="section">
   <div class="section-title">Overview</div>
   <div class="grid">
@@ -107,6 +63,7 @@
   </div>
 </div>
 
+<!-- AI -->
 <div class="section">
   <div class="section-title">AI Insights</div>
   <div class="grid">
@@ -116,19 +73,28 @@
   </div>
 </div>
 
+<!-- ML -->
+<div class="section">
+  <div class="section-title">ML Intelligence</div>
+  <div class="grid">
+    <div class="card"><div class="title">Predicted Output</div><div class="value" id="predicted">--</div></div>
+    <div class="card"><div class="title">Efficiency</div><div class="value" id="efficiency">--</div></div>
+    <div class="card"><div class="title">Days to Clean</div><div class="value" id="days">--</div></div>
+  </div>
+</div>
+
+<!-- GRAPH -->
 <div class="section">
   <div class="section-title">Analytics</div>
 
-  <!-- TOGGLE BUTTONS -->
   <div class="toggle">
-    <button onclick="setGraph('output')" class="active">Output</button>
-    <button onclick="setGraph('light')">Light</button>
-    <button onclick="setGraph('performance')">Performance</button>
+    <button onclick="setMode('all')" class="active">All</button>
+    <button onclick="setMode('output')">Output</button>
+    <button onclick="setMode('light')">Light</button>
+    <button onclick="setMode('performance')">Performance</button>
   </div>
 
-  <div class="chart-container">
-    <canvas id="mainChart"></canvas>
-  </div>
+  <canvas id="mainChart"></canvas>
 </div>
 
 <script>
@@ -142,10 +108,9 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 
-// LIVE DATA
+// LIVE
 db.ref("solar_system/raw_data").limitToLast(1).on("value", snap => {
   if (!snap.val()) return;
-
   const d = Object.values(snap.val())[0];
 
   light.innerText = d.light.toFixed(2);
@@ -154,14 +119,17 @@ db.ref("solar_system/raw_data").limitToLast(1).on("value", snap => {
   output.innerText = d.output.toFixed(2);
 });
 
-// AI
+// AI + ML
 db.ref("solar_system/intelligence").on("value", snap => {
   if (!snap.val()) return;
-
   const d = snap.val();
 
   confidence.innerText = d.confidence;
   health.innerText = (100 - d.drop_percentage).toFixed(0) + "%";
+
+  predicted.innerText = d.predicted_output.toFixed(2);
+  efficiency.innerText = (d.efficiency * 100).toFixed(1) + "%";
+  days.innerText = d.days_to_clean;
 
   statusBox.className = "status";
 
@@ -180,65 +148,67 @@ db.ref("solar_system/intelligence").on("value", snap => {
 // CHART
 let chart = new Chart(document.getElementById("mainChart"), {
   type: "line",
-  data: { labels: [], datasets: [{ data: [] }] },
-  options: {
-    responsive: true,
-    plugins: { legend: { display: false }},
-    scales: {
-      x: { display: false },
-      y: { grid: { color: "#1f2937" } }
-    }
-  }
+  data: { labels: [], datasets: [] }
 });
 
-let currentMode = "output";
-
-function setGraph(mode) {
-  currentMode = mode;
-
-  document.querySelectorAll(".toggle button").forEach(btn => btn.classList.remove("active"));
-  event.target.classList.add("active");
-
-  updateGraph();
-}
-
+let mode = "all";
 let rawData = {};
 let dailyData = {};
+
+function setMode(m) {
+  mode = m;
+  document.querySelectorAll(".toggle button").forEach(b => b.classList.remove("active"));
+  event.target.classList.add("active");
+  updateChart();
+}
 
 db.ref("solar_system/raw_data").limitToLast(20).on("value", snap => {
   if (!snap.val()) return;
   rawData = snap.val();
-  updateGraph();
+  updateChart();
 });
 
 db.ref("solar_system/daily_summary").on("value", snap => {
   if (!snap.val()) return;
   dailyData = snap.val();
-  updateGraph();
+  updateChart();
 });
 
-function updateGraph() {
+function updateChart() {
   let labels = [];
-  let data = [];
+  let datasets = [];
 
-  if (currentMode === "output" || currentMode === "light") {
-    Object.keys(rawData).forEach(k => {
-      labels.push(k);
-      data.push(rawData[k][currentMode]);
-    });
-  } 
-  else {
-    Object.keys(dailyData).sort().forEach(day => {
-      let d = dailyData[day];
-      if (d.max_light !== 0) {
-        labels.push(day);
-        data.push(d.max_output / d.max_light);
-      }
-    });
+  let outputData = [];
+  let lightData = [];
+  let perfData = [];
+
+  Object.keys(rawData).forEach(k => {
+    labels.push(k);
+    outputData.push(rawData[k].output);
+    lightData.push(rawData[k].light);
+  });
+
+  Object.keys(dailyData).sort().forEach(day => {
+    let d = dailyData[day];
+    if (d.max_light !== 0) {
+      perfData.push(d.max_output / d.max_light);
+    }
+  });
+
+  if (mode === "all" || mode === "output") {
+    datasets.push({ label:"Output", data:outputData, borderColor:"#3b82f6" });
+  }
+
+  if (mode === "all" || mode === "light") {
+    datasets.push({ label:"Light", data:lightData, borderColor:"#facc15" });
+  }
+
+  if (mode === "all" || mode === "performance") {
+    datasets.push({ label:"Performance", data:perfData, borderColor:"#f97316" });
   }
 
   chart.data.labels = labels;
-  chart.data.datasets[0].data = data;
+  chart.data.datasets = datasets;
   chart.update();
 }
 
