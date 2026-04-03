@@ -10,7 +10,7 @@
   <style>
     body {
       margin: 0;
-      font-family: system-ui;
+      font-family: system-ui, -apple-system;
       background: #0b1220;
       color: #e5e7eb;
     }
@@ -22,43 +22,65 @@
       border-bottom: 1px solid #1f2937;
     }
 
-    h1 { font-size: 20px; margin: 0; }
+    h1 { font-size: 18px; margin: 0; }
+
+    .section {
+      padding: 10px 20px;
+      border-top: 1px solid #1f2937;
+    }
 
     .section-title {
-      padding: 10px 20px;
-      font-size: 14px;
+      font-size: 12px;
       color: #9ca3af;
+      margin-bottom: 10px;
     }
 
     .grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(200px,1fr));
-      gap: 16px;
-      padding: 0 20px 20px;
+      gap: 14px;
     }
 
     .card {
       background: #111827;
       border: 1px solid #1f2937;
-      border-radius: 10px;
-      padding: 16px;
+      border-radius: 8px;
+      padding: 14px;
     }
 
-    .title { font-size: 12px; color: #9ca3af; }
-    .value { font-size: 20px; margin-top: 5px; }
+    .title {
+      font-size: 11px;
+      color: #9ca3af;
+    }
+
+    .value {
+      font-size: 22px;
+      font-weight: 600;
+      margin-top: 4px;
+    }
 
     .status {
-      padding: 8px;
-      border-radius: 6px;
       text-align: center;
+      padding: 6px;
+      border-radius: 5px;
+      font-size: 13px;
     }
 
-    .normal { background: #065f46; }
-    .monitor { background: #92400e; }
+    .normal { background: #064e3b; }
+    .monitor { background: #78350f; }
     .clean { background: #7f1d1d; }
 
+    .charts {
+      padding: 0 20px 20px;
+      display: grid;
+      gap: 20px;
+    }
+
     canvas {
-      margin: 10px 20px;
+      background: #111827;
+      border: 1px solid #1f2937;
+      border-radius: 8px;
+      padding: 8px;
       max-height: 250px;
     }
 
@@ -71,7 +93,7 @@
 
     .footer {
       text-align: center;
-      font-size: 12px;
+      font-size: 11px;
       color: #9ca3af;
       margin: 15px;
     }
@@ -87,29 +109,37 @@
   <div id="liveStatus">● Live</div>
 </div>
 
-<div class="section-title">Overview</div>
-<div class="grid">
-  <div class="card"><div class="title">Light</div><div class="value" id="light">--</div></div>
-  <div class="card"><div class="title">Temp</div><div class="value" id="temp">--</div></div>
-  <div class="card"><div class="title">Humidity</div><div class="value" id="hum">--</div></div>
-  <div class="card"><div class="title">Output</div><div class="value" id="output">--</div></div>
+<div class="section">
+  <div class="section-title">Overview</div>
+  <div class="grid">
+    <div class="card"><div class="title">Light</div><div class="value" id="light">--</div></div>
+    <div class="card"><div class="title">Temperature</div><div class="value" id="temp">--</div></div>
+    <div class="card"><div class="title">Humidity</div><div class="value" id="hum">--</div></div>
+    <div class="card"><div class="title">Output</div><div class="value" id="output">--</div></div>
+  </div>
 </div>
 
-<div class="section-title">AI Insights</div>
-<div class="grid">
-  <div class="card"><div class="title">Status</div><div id="statusBox" class="status">--</div></div>
-  <div class="card"><div class="title">Confidence</div><div class="value" id="confidence">--</div></div>
-  <div class="card"><div class="title">Health</div><div class="value" id="health">--</div></div>
+<div class="section">
+  <div class="section-title">AI Insights</div>
+  <div class="grid">
+    <div class="card"><div class="title">Status</div><div id="statusBox" class="status">--</div></div>
+    <div class="card"><div class="title">Confidence</div><div class="value" id="confidence">--</div></div>
+    <div class="card"><div class="title">Health</div><div class="value" id="health">--</div></div>
+  </div>
+  <div class="grid" style="margin-top:10px;">
+    <div class="card"><div class="title">Reason</div><div id="reason">--</div></div>
+  </div>
 </div>
 
-<div class="grid">
-  <div class="card"><div class="title">Reason</div><div id="reason">--</div></div>
+<div class="section">
+  <div class="section-title">Analytics</div>
 </div>
 
-<div class="section-title">Analytics</div>
-<canvas id="outputChart"></canvas>
-<canvas id="lightChart"></canvas>
-<canvas id="perfChart"></canvas>
+<div class="charts">
+  <canvas id="outputChart"></canvas>
+  <canvas id="lightChart"></canvas>
+  <canvas id="perfChart"></canvas>
+</div>
 
 <div class="footer">
   Updated: <span id="time">--</span>
@@ -148,8 +178,8 @@ db.ref("solar_system/intelligence").on("value", snap => {
   confidence.innerText = d.confidence;
   reason.innerText = d.reason;
 
-  let healthVal = Math.max(0, 100 - d.drop_percentage);
-  health.innerText = healthVal.toFixed(0) + "%";
+  let h = Math.max(0, 100 - d.drop_percentage);
+  health.innerText = h.toFixed(0) + "%";
 
   statusBox.className = "status";
 
@@ -157,92 +187,90 @@ db.ref("solar_system/intelligence").on("value", snap => {
     statusBox.innerText = "NORMAL";
     statusBox.classList.add("normal");
     alertBox.style.display = "none";
-  } 
-  else if (d.status.includes("MONITOR")) {
+  } else if (d.status.includes("MONITOR")) {
     statusBox.innerText = "MONITOR";
     statusBox.classList.add("monitor");
     alertBox.style.display = "none";
-  } 
-  else {
+  } else {
     statusBox.innerText = "CLEAN REQUIRED";
     statusBox.classList.add("clean");
     alertBox.style.display = "block";
   }
 });
 
-// CHART CONFIG (CLEAN STYLE)
-const chartOptions = {
-  responsive: true,
-  plugins: { legend: { display: false }},
-  scales: {
-    x: { display: false },
-    y: { grid: { color: "#1f2937" } }
+// CHART STYLE
+const options = {
+  responsive:true,
+  plugins:{legend:{display:false}},
+  scales:{
+    x:{display:false},
+    y:{grid:{color:"#1f2937"}}
   }
 };
 
-let outputChart = new Chart(outputChart, {
-  type: "line",
-  data: { labels: [], datasets: [{ data: [], borderColor:"#3b82f6", tension:0.4 }] },
-  options: chartOptions
+let outputChart = new Chart(outputChart,{
+  type:"line",
+  data:{labels:[],datasets:[{data:[],borderColor:"#3b82f6",tension:0.4}]},
+  options:options
 });
 
-let lightChart = new Chart(lightChart, {
-  type: "line",
-  data: { labels: [], datasets: [{ data: [], borderColor:"#facc15", tension:0.4 }] },
-  options: chartOptions
+let lightChart = new Chart(lightChart,{
+  type:"line",
+  data:{labels:[],datasets:[{data:[],borderColor:"#facc15",tension:0.4}]},
+  options:options
 });
 
-let perfChart = new Chart(perfChart, {
-  type: "line",
-  data: { labels: [], datasets: [{ data: [], borderColor:"#f97316", tension:0.4 }] },
-  options: chartOptions
+let perfChart = new Chart(perfChart,{
+  type:"line",
+  data:{labels:[],datasets:[{data:[],borderColor:"#f97316",tension:0.4}]},
+  options:options
 });
 
-// RAW DATA GRAPH
-db.ref("solar_system/raw_data").limitToLast(20).on("value", snap => {
-  if (!snap.val()) return;
+// RAW GRAPH
+db.ref("solar_system/raw_data").limitToLast(20).on("value", snap=>{
+  if(!snap.val()) return;
 
-  let vals = snap.val();
-  let labels = [], out=[], light=[];
+  let v=snap.val();
+  let labels=[],o=[],l=[];
 
-  Object.keys(vals).forEach(k=>{
+  Object.keys(v).forEach(k=>{
     labels.push(k);
-    out.push(vals[k].output);
-    light.push(vals[k].light);
+    o.push(v[k].output);
+    l.push(v[k].light);
   });
 
-  outputChart.data.labels = labels;
-  outputChart.data.datasets[0].data = out;
+  outputChart.data.labels=labels;
+  outputChart.data.datasets[0].data=o;
   outputChart.update();
 
-  lightChart.data.labels = labels;
-  lightChart.data.datasets[0].data = light;
+  lightChart.data.labels=labels;
+  lightChart.data.datasets[0].data=l;
   lightChart.update();
 });
 
-// PERFORMANCE GRAPH
-db.ref("solar_system/daily_summary").on("value", snap => {
-  if (!snap.val()) return;
+// PERF GRAPH
+db.ref("solar_system/daily_summary").on("value", snap=>{
+  if(!snap.val()) return;
 
-  let vals = snap.val();
-  let labels=[], data=[];
+  let v=snap.val();
+  let labels=[],d=[];
 
-  Object.keys(vals).sort().forEach(day=>{
-    let d = vals[day];
-    if (d.max_light!=0){
+  Object.keys(v).sort().forEach(day=>{
+    let x=v[day];
+    if(x.max_light!=0){
       labels.push(day);
-      data.push(d.max_output/d.max_light);
+      d.push(x.max_output/x.max_light);
     }
   });
 
-  perfChart.data.labels = labels;
-  perfChart.data.datasets[0].data = data;
+  perfChart.data.labels=labels;
+  perfChart.data.datasets[0].data=d;
   perfChart.update();
 });
 
 // BLINK
 setInterval(()=>{
-  let el=document.getElementById("liveStatus");
+  let el=liveStatus;
   el.style.opacity=el.style.opacity==0.5?1:0.5;
 },500);
 
