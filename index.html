@@ -15,11 +15,6 @@
       color: white;
     }
 
-    h1 {
-      text-align: center;
-      color: #38bdf8;
-    }
-
     .header {
       display: flex;
       justify-content: space-between;
@@ -27,14 +22,24 @@
       align-items: center;
     }
 
+    h1 { color: #38bdf8; }
+
     .live {
       color: #22c55e;
       font-weight: bold;
     }
 
+    .alert {
+      display: none;
+      background: #ef4444;
+      padding: 10px;
+      text-align: center;
+      font-weight: bold;
+    }
+
     .container {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
       gap: 20px;
       padding: 20px;
     }
@@ -47,25 +52,16 @@
       transition: 0.3s;
     }
 
-    .card:hover {
-      transform: scale(1.05);
-    }
+    .card:hover { transform: scale(1.05); }
 
-    .title {
-      font-size: 14px;
-      color: #94a3b8;
-    }
-
-    .value {
-      font-size: 28px;
-      font-weight: bold;
-    }
+    .title { color: #94a3b8; }
+    .value { font-size: 26px; font-weight: bold; }
 
     .status {
       text-align: center;
-      font-size: 20px;
       padding: 10px;
       border-radius: 10px;
+      font-size: 18px;
     }
 
     .normal { background: #22c55e; }
@@ -75,8 +71,8 @@
     canvas {
       background: #1e293b;
       border-radius: 15px;
-      padding: 10px;
       margin: 20px;
+      padding: 10px;
     }
 
     .footer {
@@ -88,6 +84,8 @@
 </head>
 
 <body>
+
+<div id="alertBox" class="alert">⚠ Cleaning Required Immediately</div>
 
 <div class="header">
   <h1>☀ Solar AI Dashboard</h1>
@@ -108,18 +106,26 @@
   </div>
 
   <div class="card">
-    <div class="title">Reason</div>
-    <div id="reason" style="font-size:16px;">--</div>
+    <div class="title">Confidence</div>
+    <div class="value" id="confidence">--</div>
   </div>
 
   <div class="card">
-    <div class="title">Confidence</div>
-    <div class="value" id="confidence">--</div>
+    <div class="title">Health Score</div>
+    <div class="value" id="health">--</div>
+  </div>
+</div>
+
+<div class="container">
+  <div class="card">
+    <div class="title">Reason</div>
+    <div id="reason">--</div>
   </div>
 </div>
 
 <canvas id="outputChart"></canvas>
 <canvas id="lightChart"></canvas>
+<canvas id="perfChart"></canvas>
 
 <div class="footer">
   Last Updated: <span id="time">--</span>
@@ -136,7 +142,7 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 
-// 🔄 Live Data
+// LIVE DATA
 db.ref("solar_system/raw_data").limitToLast(1).on("value", snap => {
   const data = Object.values(snap.val())[0];
 
@@ -148,65 +154,96 @@ db.ref("solar_system/raw_data").limitToLast(1).on("value", snap => {
   document.getElementById("time").innerText = new Date().toLocaleTimeString();
 });
 
-// 🧠 AI Data
+// AI DATA
 db.ref("solar_system/intelligence").on("value", snap => {
   const d = snap.val();
   const statusBox = document.getElementById("statusBox");
 
-  document.getElementById("reason").innerText = d.reason;
   document.getElementById("confidence").innerText = d.confidence;
+  document.getElementById("reason").innerText = d.reason;
+
+  let health = Math.max(0, 100 - d.drop_percentage);
+  document.getElementById("health").innerText = health.toFixed(0) + "%";
 
   statusBox.className = "status";
 
   if (d.status.includes("NORMAL")) {
     statusBox.innerHTML = "🟢 NORMAL";
     statusBox.classList.add("normal");
+    document.getElementById("alertBox").style.display = "none";
   } 
   else if (d.status.includes("MONITOR")) {
     statusBox.innerHTML = "🟡 MONITOR";
     statusBox.classList.add("monitor");
+    document.getElementById("alertBox").style.display = "none";
   } 
   else {
     statusBox.innerHTML = "🔴 CLEAN";
     statusBox.classList.add("clean");
+    document.getElementById("alertBox").style.display = "block";
   }
 });
 
-// 📊 Output Chart
+// OUTPUT CHART
 let outputChart = new Chart(document.getElementById("outputChart"), {
   type: "line",
-  data: { labels: [], datasets: [{ label: "Output", data: [], borderColor: "#38bdf8", tension: 0.3 }] }
+  data: { labels: [], datasets: [{ label: "Output", data: [], borderColor: "#38bdf8" }] }
 });
 
-// 📊 Light Chart
+// LIGHT CHART
 let lightChart = new Chart(document.getElementById("lightChart"), {
   type: "line",
-  data: { labels: [], datasets: [{ label: "Light", data: [], borderColor: "yellow", tension: 0.3 }] }
+  data: { labels: [], datasets: [{ label: "Light", data: [], borderColor: "yellow" }] }
 });
 
-// 📡 Update Charts
+// PERFORMANCE CHART
+let perfChart = new Chart(document.getElementById("perfChart"), {
+  type: "line",
+  data: { labels: [], datasets: [{ label: "Performance", data: [], borderColor: "orange" }] }
+});
+
+// UPDATE GRAPHS
 db.ref("solar_system/raw_data").limitToLast(20).on("value", snap => {
   let values = snap.val();
   let labels = [];
-  let outputData = [];
-  let lightData = [];
+  let out = [];
+  let light = [];
 
   Object.keys(values).forEach(key => {
     labels.push(key.substring(1,6));
-    outputData.push(values[key].output);
-    lightData.push(values[key].light);
+    out.push(values[key].output);
+    light.push(values[key].light);
   });
 
   outputChart.data.labels = labels;
-  outputChart.data.datasets[0].data = outputData;
+  outputChart.data.datasets[0].data = out;
   outputChart.update();
 
   lightChart.data.labels = labels;
-  lightChart.data.datasets[0].data = lightData;
+  lightChart.data.datasets[0].data = light;
   lightChart.update();
 });
 
-// 🔴 Blinking Live Indicator
+// PERFORMANCE GRAPH
+db.ref("solar_system/daily_summary").on("value", snap => {
+  let values = snap.val();
+  let labels = [];
+  let data = [];
+
+  Object.keys(values).forEach(day => {
+    let d = values[day];
+    if (d.max_light != 0) {
+      labels.push(day);
+      data.push(d.max_output / d.max_light);
+    }
+  });
+
+  perfChart.data.labels = labels;
+  perfChart.data.datasets[0].data = data;
+  perfChart.update();
+});
+
+// BLINKING LIVE DOT
 setInterval(() => {
   const el = document.getElementById("liveStatus");
   el.style.opacity = (el.style.opacity == 0.5) ? 1 : 0.5;
