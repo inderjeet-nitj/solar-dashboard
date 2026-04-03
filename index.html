@@ -10,7 +10,7 @@
   <style>
     body {
       margin: 0;
-      font-family: system-ui, -apple-system;
+      font-family: system-ui;
       background: #0b1220;
       color: #e5e7eb;
     }
@@ -22,10 +22,8 @@
       border-bottom: 1px solid #1f2937;
     }
 
-    h1 { font-size: 18px; margin: 0; }
-
     .section {
-      padding: 10px 20px;
+      padding: 15px 20px;
       border-top: 1px solid #1f2937;
     }
 
@@ -48,72 +46,62 @@
       padding: 14px;
     }
 
-    .title {
-      font-size: 11px;
-      color: #9ca3af;
-    }
-
-    .value {
-      font-size: 22px;
-      font-weight: 600;
-      margin-top: 4px;
-    }
+    .title { font-size: 11px; color: #9ca3af; }
+    .value { font-size: 20px; font-weight: 600; }
 
     .status {
       text-align: center;
       padding: 6px;
       border-radius: 5px;
-      font-size: 13px;
     }
 
     .normal { background: #064e3b; }
     .monitor { background: #78350f; }
     .clean { background: #7f1d1d; }
 
-    .charts {
-      padding: 0 20px 20px;
-      display: grid;
-      gap: 20px;
+    .chart-container {
+      padding: 20px;
     }
 
     canvas {
       background: #111827;
       border: 1px solid #1f2937;
       border-radius: 8px;
-      padding: 8px;
-      max-height: 250px;
+      padding: 10px;
     }
 
-    .alert {
-      display: none;
-      background: #dc2626;
-      padding: 8px;
-      text-align: center;
+    .toggle {
+      margin-bottom: 10px;
     }
 
-    .footer {
-      text-align: center;
-      font-size: 11px;
-      color: #9ca3af;
-      margin: 15px;
+    .toggle button {
+      background: #1f2937;
+      border: none;
+      padding: 6px 10px;
+      margin-right: 5px;
+      color: white;
+      cursor: pointer;
+      border-radius: 5px;
+    }
+
+    .toggle button.active {
+      background: #2563eb;
     }
   </style>
 </head>
 
 <body>
 
-<div id="alertBox" class="alert">⚠ Cleaning Required</div>
-
 <div class="header">
-  <h1>Solar AI Dashboard</h1>
-  <div id="liveStatus">● Live</div>
+  <h3>Solar AI Dashboard</h3>
+  <div>● Live</div>
 </div>
 
 <div class="section">
   <div class="section-title">Overview</div>
   <div class="grid">
     <div class="card"><div class="title">Light</div><div class="value" id="light">--</div></div>
-    <div class="card"><div class="title">Temperature</div><div class="value" id="temp">--</div></div>
+    <div class="card"><div class="title">Temp</div><div class="value" id="temp">--</div></div>
     <div class="card"><div class="title">Humidity</div><div class="value" id="hum">--</div></div>
     <div class="card"><div class="title">Output</div><div class="value" id="output">--</div></div>
   </div>
@@ -126,27 +114,26 @@
     <div class="card"><div class="title">Confidence</div><div class="value" id="confidence">--</div></div>
     <div class="card"><div class="title">Health</div><div class="value" id="health">--</div></div>
   </div>
-  <div class="grid" style="margin-top:10px;">
-    <div class="card"><div class="title">Reason</div><div id="reason">--</div></div>
-  </div>
 </div>
 
 <div class="section">
   <div class="section-title">Analytics</div>
-</div>
 
-<div class="charts">
-  <canvas id="outputChart"></canvas>
-  <canvas id="lightChart"></canvas>
-  <canvas id="perfChart"></canvas>
-</div>
+  <!-- TOGGLE BUTTONS -->
+  <div class="toggle">
+    <button onclick="setGraph('output')" class="active">Output</button>
+    <button onclick="setGraph('light')">Light</button>
+    <button onclick="setGraph('performance')">Performance</button>
+  </div>
 
-<div class="footer">
-  Updated: <span id="time">--</span>
+  <div class="chart-container">
+    <canvas id="mainChart"></canvas>
+  </div>
 </div>
 
 <script>
 
+// FIREBASE
 const firebaseConfig = {
   apiKey: "AIzaSyBxSJVwGXypLCFU6usgZ5Ghdtur6E6IObE",
   databaseURL: "https://solar-intelligence-system-default-rtdb.firebaseio.com/"
@@ -165,114 +152,95 @@ db.ref("solar_system/raw_data").limitToLast(1).on("value", snap => {
   temp.innerText = d.temp + "°C";
   hum.innerText = d.humidity + "%";
   output.innerText = d.output.toFixed(2);
-
-  time.innerText = new Date().toLocaleTimeString();
 });
 
-// AI DATA
+// AI
 db.ref("solar_system/intelligence").on("value", snap => {
   if (!snap.val()) return;
 
   const d = snap.val();
 
   confidence.innerText = d.confidence;
-  reason.innerText = d.reason;
-
-  let h = Math.max(0, 100 - d.drop_percentage);
-  health.innerText = h.toFixed(0) + "%";
+  health.innerText = (100 - d.drop_percentage).toFixed(0) + "%";
 
   statusBox.className = "status";
 
   if (d.status.includes("NORMAL")) {
     statusBox.innerText = "NORMAL";
     statusBox.classList.add("normal");
-    alertBox.style.display = "none";
   } else if (d.status.includes("MONITOR")) {
     statusBox.innerText = "MONITOR";
     statusBox.classList.add("monitor");
-    alertBox.style.display = "none";
   } else {
-    statusBox.innerText = "CLEAN REQUIRED";
+    statusBox.innerText = "CLEAN";
     statusBox.classList.add("clean");
-    alertBox.style.display = "block";
   }
 });
 
-// CHART STYLE
-const options = {
-  responsive:true,
-  plugins:{legend:{display:false}},
-  scales:{
-    x:{display:false},
-    y:{grid:{color:"#1f2937"}}
-  }
-};
-
-let outputChart = new Chart(outputChart,{
-  type:"line",
-  data:{labels:[],datasets:[{data:[],borderColor:"#3b82f6",tension:0.4}]},
-  options:options
-});
-
-let lightChart = new Chart(lightChart,{
-  type:"line",
-  data:{labels:[],datasets:[{data:[],borderColor:"#facc15",tension:0.4}]},
-  options:options
-});
-
-let perfChart = new Chart(perfChart,{
-  type:"line",
-  data:{labels:[],datasets:[{data:[],borderColor:"#f97316",tension:0.4}]},
-  options:options
-});
-
-// RAW GRAPH
-db.ref("solar_system/raw_data").limitToLast(20).on("value", snap=>{
-  if(!snap.val()) return;
-
-  let v=snap.val();
-  let labels=[],o=[],l=[];
-
-  Object.keys(v).forEach(k=>{
-    labels.push(k);
-    o.push(v[k].output);
-    l.push(v[k].light);
-  });
-
-  outputChart.data.labels=labels;
-  outputChart.data.datasets[0].data=o;
-  outputChart.update();
-
-  lightChart.data.labels=labels;
-  lightChart.data.datasets[0].data=l;
-  lightChart.update();
-});
-
-// PERF GRAPH
-db.ref("solar_system/daily_summary").on("value", snap=>{
-  if(!snap.val()) return;
-
-  let v=snap.val();
-  let labels=[],d=[];
-
-  Object.keys(v).sort().forEach(day=>{
-    let x=v[day];
-    if(x.max_light!=0){
-      labels.push(day);
-      d.push(x.max_output/x.max_light);
+// CHART
+let chart = new Chart(document.getElementById("mainChart"), {
+  type: "line",
+  data: { labels: [], datasets: [{ data: [] }] },
+  options: {
+    responsive: true,
+    plugins: { legend: { display: false }},
+    scales: {
+      x: { display: false },
+      y: { grid: { color: "#1f2937" } }
     }
-  });
-
-  perfChart.data.labels=labels;
-  perfChart.data.datasets[0].data=d;
-  perfChart.update();
+  }
 });
 
-// BLINK
-setInterval(()=>{
-  let el=liveStatus;
-  el.style.opacity=el.style.opacity==0.5?1:0.5;
-},500);
+let currentMode = "output";
+
+function setGraph(mode) {
+  currentMode = mode;
+
+  document.querySelectorAll(".toggle button").forEach(btn => btn.classList.remove("active"));
+  event.target.classList.add("active");
+
+  updateGraph();
+}
+
+let rawData = {};
+let dailyData = {};
+
+db.ref("solar_system/raw_data").limitToLast(20).on("value", snap => {
+  if (!snap.val()) return;
+  rawData = snap.val();
+  updateGraph();
+});
+
+db.ref("solar_system/daily_summary").on("value", snap => {
+  if (!snap.val()) return;
+  dailyData = snap.val();
+  updateGraph();
+});
+
+function updateGraph() {
+  let labels = [];
+  let data = [];
+
+  if (currentMode === "output" || currentMode === "light") {
+    Object.keys(rawData).forEach(k => {
+      labels.push(k);
+      data.push(rawData[k][currentMode]);
+    });
+  } 
+  else {
+    Object.keys(dailyData).sort().forEach(day => {
+      let d = dailyData[day];
+      if (d.max_light !== 0) {
+        labels.push(day);
+        data.push(d.max_output / d.max_light);
+      }
+    });
+  }
+
+  chart.data.labels = labels;
+  chart.data.datasets[0].data = data;
+  chart.update();
+}
 
 </script>
 
