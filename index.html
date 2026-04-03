@@ -1,218 +1,869 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Solar AI Monitor</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Solar Intelligence Dashboard</title>
 
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet" />
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
 
   <style>
-    body { margin:0; font-family:system-ui; background:#0b1220; color:#e5e7eb; }
+    /* ── Design Tokens ─────────────────────────────────────────── */
+    :root {
+      --bg:        #080c14;
+      --surface-1: #0d1320;
+      --surface-2: #111827;
+      --border:    #1c2535;
+      --border-hi: #2a3a52;
+      --text-1:    #e8edf5;
+      --text-2:    #7a8ba8;
+      --text-3:    #4a5a72;
 
-    .header { display:flex; justify-content:space-between; padding:16px 24px; border-bottom:1px solid #1f2937; }
+      --accent-blue:   #3b82f6;
+      --accent-yellow: #f0b429;
+      --accent-orange: #f97316;
+      --accent-green:  #10b981;
+      --accent-red:    #ef4444;
 
-    .section { padding:15px 20px; border-top:1px solid #1f2937; }
+      --status-normal:  #064e3b;
+      --status-monitor: #78350f;
+      --status-clean:   #7f1d1d;
 
-    .section-title { font-size:12px; color:#9ca3af; margin-bottom:10px; }
+      --font-head: 'Syne', sans-serif;
+      --font-mono: 'Space Mono', monospace;
 
-    .grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:14px; }
-
-    .card { background:#111827; border:1px solid #1f2937; border-radius:8px; padding:14px; }
-
-    .title { font-size:11px; color:#9ca3af; }
-    .value { font-size:20px; font-weight:600; }
-
-    .status { text-align:center; padding:6px; border-radius:5px; }
-
-    .normal { background:#064e3b; }
-    .monitor { background:#78350f; }
-    .clean { background:#7f1d1d; }
-
-    canvas { background:#111827; border:1px solid #1f2937; border-radius:8px; padding:10px; }
-
-    .toggle button {
-      background:#1f2937;
-      border:none;
-      padding:6px 10px;
-      margin-right:5px;
-      color:white;
-      cursor:pointer;
-      border-radius:5px;
+      --radius-sm: 6px;
+      --radius-md: 10px;
+      --radius-lg: 14px;
     }
 
-    .toggle button.active { background:#2563eb; }
+    /* ── Reset ─────────────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { font-size: 16px; }
+
+    body {
+      background: var(--bg);
+      color: var(--text-1);
+      font-family: var(--font-mono);
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ── Layout ────────────────────────────────────────────────── */
+    .app-wrapper {
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 0 20px 40px;
+    }
+
+    /* ── Header ────────────────────────────────────────────────── */
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 20px 0 18px;
+      border-bottom: 1px solid var(--border);
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .header-left { display: flex; align-items: center; gap: 14px; }
+
+    .logo-mark {
+      width: 36px; height: 36px;
+      background: var(--accent-yellow);
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .logo-mark svg { width: 20px; height: 20px; }
+
+    .header h1 {
+      font-family: var(--font-head);
+      font-size: 17px;
+      font-weight: 800;
+      letter-spacing: -0.3px;
+      color: var(--text-1);
+    }
+
+    .header-sub {
+      font-size: 10px;
+      color: var(--text-3);
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      margin-top: 2px;
+    }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    .live-indicator {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      font-size: 11px;
+      color: var(--text-2);
+      letter-spacing: 0.04em;
+    }
+
+    .live-dot {
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      background: var(--accent-green);
+      animation: pulse 2s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50%       { opacity: 0.5; transform: scale(0.85); }
+    }
+
+    .last-updated {
+      font-size: 10px;
+      color: var(--text-3);
+    }
+
+    /* ── Section ───────────────────────────────────────────────── */
+    .section { padding: 24px 0 0; }
+
+    .section-label {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--text-3);
+      margin-bottom: 14px;
+    }
+
+    /* ── Grid ──────────────────────────────────────────────────── */
+    .grid-4 {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+    }
+
+    .grid-3 {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+    }
+
+    @media (max-width: 900px) {
+      .grid-4 { grid-template-columns: repeat(2, 1fr); }
+      .grid-3 { grid-template-columns: repeat(2, 1fr); }
+    }
+
+    @media (max-width: 480px) {
+      .grid-4 { grid-template-columns: 1fr; }
+      .grid-3 { grid-template-columns: 1fr; }
+    }
+
+    /* ── Card ──────────────────────────────────────────────────── */
+    .card {
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 16px;
+      transition: border-color 0.2s;
+    }
+
+    .card:hover { border-color: var(--border-hi); }
+
+    .card-label {
+      font-size: 10px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text-2);
+      margin-bottom: 10px;
+    }
+
+    .card-value {
+      font-family: var(--font-head);
+      font-size: 26px;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+      color: var(--text-1);
+      line-height: 1;
+    }
+
+    .card-value.loading {
+      color: var(--text-3);
+      font-size: 20px;
+    }
+
+    .card-unit {
+      font-size: 12px;
+      color: var(--text-2);
+      margin-left: 3px;
+      font-family: var(--font-mono);
+      font-weight: 400;
+    }
+
+    /* ── Status Card ───────────────────────────────────────────── */
+    .status-card {
+      border-radius: var(--radius-sm);
+      padding: 10px 16px;
+      text-align: center;
+      font-family: var(--font-mono);
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      transition: background 0.3s;
+    }
+
+    .status-normal  { background: var(--status-normal);  color: #6ee7b7; }
+    .status-monitor { background: var(--status-monitor); color: #fbbf24; }
+    .status-clean   { background: var(--status-clean);   color: #fca5a5; }
+    .status-pending { background: var(--surface-1);      color: var(--text-3); }
+
+    /* ── Efficiency Bar ────────────────────────────────────────── */
+    .efficiency-wrap { margin-top: 10px; }
+
+    .eff-bar-bg {
+      height: 4px;
+      background: var(--border);
+      border-radius: 2px;
+      overflow: hidden;
+      margin-top: 8px;
+    }
+
+    .eff-bar-fill {
+      height: 100%;
+      border-radius: 2px;
+      background: var(--accent-green);
+      transition: width 0.6s ease;
+    }
+
+    /* ── Chart Section ─────────────────────────────────────────── */
+    .chart-container {
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 20px;
+      margin-top: 14px;
+    }
+
+    .chart-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 18px;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .chart-title {
+      font-family: var(--font-head);
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text-1);
+    }
+
+    /* ── Toggle Buttons ────────────────────────────────────────── */
+    .toggle-group {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .toggle-btn {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--surface-1);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 5px 12px;
+      color: var(--text-2);
+      font-family: var(--font-mono);
+      font-size: 11px;
+      cursor: pointer;
+      transition: all 0.15s;
+      white-space: nowrap;
+    }
+
+    .toggle-btn:hover {
+      border-color: var(--border-hi);
+      color: var(--text-1);
+    }
+
+    .toggle-btn.active {
+      color: var(--text-1);
+      border-color: transparent;
+    }
+
+    .toggle-btn.active.btn-output  { background: rgba(59,130,246,.2);  border-color: rgba(59,130,246,.4);  }
+    .toggle-btn.active.btn-light   { background: rgba(240,180,41,.15); border-color: rgba(240,180,41,.4);  }
+    .toggle-btn.active.btn-perf    { background: rgba(249,115,22,.15); border-color: rgba(249,115,22,.4);  }
+
+    .btn-dot {
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .dot-output { background: var(--accent-blue); }
+    .dot-light  { background: var(--accent-yellow); }
+    .dot-perf   { background: var(--accent-orange); }
+
+    /* ── Canvas Wrapper ────────────────────────────────────────── */
+    .canvas-wrap {
+      position: relative;
+      width: 100%;
+      height: 280px;
+    }
+
+    /* ── Loading Overlay ───────────────────────────────────────── */
+    .loading-overlay {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: var(--surface-2);
+      border-radius: var(--radius-md);
+      gap: 12px;
+      z-index: 10;
+      transition: opacity 0.3s;
+    }
+
+    .loading-overlay.hidden { opacity: 0; pointer-events: none; }
+
+    .spinner {
+      width: 26px; height: 26px;
+      border: 2px solid var(--border);
+      border-top-color: var(--accent-blue);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .loading-text {
+      font-size: 11px;
+      color: var(--text-3);
+      letter-spacing: 0.06em;
+    }
+
+    /* ── Error Banner ──────────────────────────────────────────── */
+    .error-banner {
+      background: rgba(239,68,68,.12);
+      border: 1px solid rgba(239,68,68,.3);
+      border-radius: var(--radius-sm);
+      padding: 10px 16px;
+      font-size: 12px;
+      color: #fca5a5;
+      display: none;
+      margin-top: 12px;
+    }
+
+    /* ── Divider ───────────────────────────────────────────────── */
+    .divider { border: none; border-top: 1px solid var(--border); margin: 24px 0 0; }
+
+    /* ── Scrollbar ─────────────────────────────────────────────── */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: var(--bg); }
+    ::-webkit-scrollbar-thumb { background: var(--border-hi); border-radius: 3px; }
   </style>
 </head>
 
 <body>
+<div class="app-wrapper">
 
-<div class="header">
-  <h3>Solar AI Dashboard</h3>
-  <div>● Live</div>
-</div>
+  <!-- ── Header ── -->
+  <header class="header">
+    <div class="header-left">
+      <div class="logo-mark">
+        <!-- Solar icon -->
+        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="12" cy="12" r="4" fill="#080c14"/>
+          <path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"
+                stroke="#080c14" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <div>
+        <h1>Solar Intelligence</h1>
+        <div class="header-sub">AI-Powered Monitoring System</div>
+      </div>
+    </div>
+    <div class="header-right">
+      <div class="last-updated" id="lastUpdated">—</div>
+      <div class="live-indicator">
+        <div class="live-dot" id="liveDot"></div>
+        <span>LIVE</span>
+      </div>
+    </div>
+  </header>
 
-<!-- OVERVIEW -->
-<div class="section">
-  <div class="section-title">Overview</div>
-  <div class="grid">
-    <div class="card"><div class="title">Light</div><div class="value" id="light">--</div></div>
-    <div class="card"><div class="title">Temp</div><div class="value" id="temp">--</div></div>
-    <div class="card"><div class="title">Humidity</div><div class="value" id="hum">--</div></div>
-    <div class="card"><div class="title">Output</div><div class="value" id="output">--</div></div>
-  </div>
-</div>
+  <!-- ── Overview ── -->
+  <section class="section">
+    <div class="section-label">Sensor Overview</div>
+    <div class="grid-4">
 
-<!-- AI -->
-<div class="section">
-  <div class="section-title">AI Insights</div>
-  <div class="grid">
-    <div class="card"><div class="title">Status</div><div id="statusBox" class="status">--</div></div>
-    <div class="card"><div class="title">Confidence</div><div class="value" id="confidence">--</div></div>
-    <div class="card"><div class="title">Health</div><div class="value" id="health">--</div></div>
-  </div>
-</div>
+      <div class="card">
+        <div class="card-label">Light Intensity</div>
+        <div class="card-value loading" id="valLight">—</div>
+      </div>
 
-<!-- ML -->
-<div class="section">
-  <div class="section-title">ML Intelligence</div>
-  <div class="grid">
-    <div class="card"><div class="title">Predicted Output</div><div class="value" id="predicted">--</div></div>
-    <div class="card"><div class="title">Efficiency</div><div class="value" id="efficiency">--</div></div>
-    <div class="card"><div class="title">Days to Clean</div><div class="value" id="days">--</div></div>
-  </div>
-</div>
+      <div class="card">
+        <div class="card-label">Temperature</div>
+        <div class="card-value loading" id="valTemp">—</div>
+      </div>
 
-<!-- GRAPH -->
-<div class="section">
-  <div class="section-title">Analytics</div>
+      <div class="card">
+        <div class="card-label">Humidity</div>
+        <div class="card-value loading" id="valHum">—</div>
+      </div>
 
-  <div class="toggle">
-    <button onclick="setMode('all')" class="active">All</button>
-    <button onclick="setMode('output')">Output</button>
-    <button onclick="setMode('light')">Light</button>
-    <button onclick="setMode('performance')">Performance</button>
-  </div>
+      <div class="card">
+        <div class="card-label">Actual Output</div>
+        <div class="card-value loading" id="valOutput">—</div>
+      </div>
 
-  <canvas id="mainChart"></canvas>
-</div>
+    </div>
+  </section>
+
+  <hr class="divider" />
+
+  <!-- ── AI Insights ── -->
+  <section class="section">
+    <div class="section-label">AI Insights</div>
+    <div class="grid-3">
+
+      <div class="card">
+        <div class="card-label">System Status</div>
+        <div class="status-card status-pending" id="statusBox">AWAITING DATA</div>
+      </div>
+
+      <div class="card">
+        <div class="card-label">Model Confidence</div>
+        <div class="card-value loading" id="valConfidence">—</div>
+      </div>
+
+      <div class="card">
+        <div class="card-label">Panel Health</div>
+        <div class="card-value loading" id="valHealth">—</div>
+        <div class="efficiency-wrap">
+          <div class="eff-bar-bg">
+            <div class="eff-bar-fill" id="healthBar" style="width:0%"></div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <hr class="divider" />
+
+  <!-- ── ML Intelligence ── -->
+  <section class="section">
+    <div class="section-label">ML Intelligence</div>
+    <div class="grid-3">
+
+      <div class="card">
+        <div class="card-label">Predicted Output</div>
+        <div class="card-value loading" id="valPredicted">—</div>
+      </div>
+
+      <div class="card">
+        <div class="card-label">Efficiency</div>
+        <div class="card-value loading" id="valEfficiency">—</div>
+        <div class="efficiency-wrap">
+          <div class="eff-bar-bg">
+            <div class="eff-bar-fill" id="effBar" style="width:0%; background: var(--accent-blue)"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-label">Days to Next Clean</div>
+        <div class="card-value loading" id="valDays">—</div>
+      </div>
+
+    </div>
+  </section>
+
+  <hr class="divider" />
+
+  <!-- ── Analytics Chart ── -->
+  <section class="section">
+    <div class="section-label">Analytics</div>
+
+    <div class="chart-container">
+      <div class="chart-header">
+        <div class="chart-title">Performance Trends</div>
+        <div class="toggle-group">
+          <button class="toggle-btn btn-output active" data-dataset="output" onclick="App.toggleDataset('output', this)">
+            <span class="btn-dot dot-output"></span>Output
+          </button>
+          <button class="toggle-btn btn-light active" data-dataset="light" onclick="App.toggleDataset('light', this)">
+            <span class="btn-dot dot-light"></span>Light
+          </button>
+          <button class="toggle-btn btn-perf active" data-dataset="performance" onclick="App.toggleDataset('performance', this)">
+            <span class="btn-dot dot-perf"></span>Performance
+          </button>
+        </div>
+      </div>
+
+      <div class="canvas-wrap">
+        <div class="loading-overlay" id="chartLoader">
+          <div class="spinner"></div>
+          <div class="loading-text">Connecting to data source…</div>
+        </div>
+        <canvas id="mainChart"></canvas>
+      </div>
+    </div>
+
+    <div class="error-banner" id="errorBanner"></div>
+  </section>
+
+</div><!-- /app-wrapper -->
 
 <script>
+/* ═══════════════════════════════════════════════════════════════
+   Solar AI Dashboard — Production JS
+   ═══════════════════════════════════════════════════════════════ */
 
-// FIREBASE
-const firebaseConfig = {
-  apiKey: "AIzaSyBxSJVwGXypLCFU6usgZ5Ghdtur6E6IObE",
-  databaseURL: "https://solar-intelligence-system-default-rtdb.firebaseio.com/"
-};
+const App = (() => {
 
-firebase.initializeApp(firebaseConfig);
-const db = firebase.database();
+  /* ── Firebase Init ─────────────────────────────────────────── */
+  const FB_CONFIG = {
+    apiKey:      "AIzaSyBxSJVwGXypLCFU6usgZ5Ghdtur6E6IObE",
+    databaseURL: "https://solar-intelligence-system-default-rtdb.firebaseio.com/"
+  };
 
-// LIVE
-db.ref("solar_system/raw_data").limitToLast(1).on("value", snap => {
-  if (!snap.val()) return;
-  const d = Object.values(snap.val())[0];
+  let db = null;
 
-  light.innerText = d.light.toFixed(2);
-  temp.innerText = d.temp + "°C";
-  hum.innerText = d.humidity + "%";
-  output.innerText = d.output.toFixed(2);
-});
-
-// AI + ML
-db.ref("solar_system/intelligence").on("value", snap => {
-  if (!snap.val()) return;
-  const d = snap.val();
-
-  confidence.innerText = d.confidence;
-  health.innerText = (100 - d.drop_percentage).toFixed(0) + "%";
-
-  predicted.innerText = d.predicted_output.toFixed(2);
-  efficiency.innerText = (d.efficiency * 100).toFixed(1) + "%";
-  days.innerText = d.days_to_clean;
-
-  statusBox.className = "status";
-
-  if (d.status.includes("NORMAL")) {
-    statusBox.innerText = "NORMAL";
-    statusBox.classList.add("normal");
-  } else if (d.status.includes("MONITOR")) {
-    statusBox.innerText = "MONITOR";
-    statusBox.classList.add("monitor");
-  } else {
-    statusBox.innerText = "CLEAN";
-    statusBox.classList.add("clean");
+  try {
+    firebase.initializeApp(FB_CONFIG);
+    db = firebase.database();
+  } catch (err) {
+    showError("Firebase initialisation failed: " + err.message);
   }
-});
 
-// CHART
-let chart = new Chart(document.getElementById("mainChart"), {
-  type: "line",
-  data: { labels: [], datasets: [] }
-});
+  /* ── Chart Setup ───────────────────────────────────────────── */
+  const CHART_COLORS = {
+    output:      "#3b82f6",
+    light:       "#f0b429",
+    performance: "#f97316"
+  };
 
-let mode = "all";
-let rawData = {};
-let dailyData = {};
+  // Visibility state per dataset
+  const datasetVisible = { output: true, light: true, performance: true };
 
-function setMode(m) {
-  mode = m;
-  document.querySelectorAll(".toggle button").forEach(b => b.classList.remove("active"));
-  event.target.classList.add("active");
-  updateChart();
-}
+  // Stored chart data
+  let chartData = {
+    labels:      [],
+    output:      [],
+    light:       [],
+    performance: []
+  };
 
-db.ref("solar_system/raw_data").limitToLast(20).on("value", snap => {
-  if (!snap.val()) return;
-  rawData = snap.val();
-  updateChart();
-});
+  Chart.defaults.font.family = "'Space Mono', monospace";
+  Chart.defaults.font.size   = 11;
+  Chart.defaults.color       = "#7a8ba8";
 
-db.ref("solar_system/daily_summary").on("value", snap => {
-  if (!snap.val()) return;
-  dailyData = snap.val();
-  updateChart();
-});
+  const ctx = document.getElementById("mainChart").getContext("2d");
 
-function updateChart() {
-  let labels = [];
-  let datasets = [];
-
-  let outputData = [];
-  let lightData = [];
-  let perfData = [];
-
-  Object.keys(rawData).forEach(k => {
-    labels.push(k);
-    outputData.push(rawData[k].output);
-    lightData.push(rawData[k].light);
+  const makeDataset = (key, label, color) => ({
+    label,
+    data:            [],
+    borderColor:     color,
+    backgroundColor: color + "18",
+    borderWidth:     1.5,
+    pointRadius:     2,
+    pointHoverRadius: 4,
+    tension:         0.4,
+    fill:            false,
+    hidden:          false
   });
 
-  Object.keys(dailyData).sort().forEach(day => {
-    let d = dailyData[day];
-    if (d.max_light !== 0) {
-      perfData.push(d.max_output / d.max_light);
+  const chart = new Chart(ctx, {
+    type: "line",
+    data: {
+      labels: [],
+      datasets: [
+        makeDataset("output",      "Output",      CHART_COLORS.output),
+        makeDataset("light",       "Light",       CHART_COLORS.light),
+        makeDataset("performance", "Performance", CHART_COLORS.performance)
+      ]
+    },
+    options: {
+      responsive:          true,
+      maintainAspectRatio: false,
+      animation:           { duration: 400 },
+      interaction:         { mode: "index", intersect: false },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: "#111827",
+          borderColor:     "#2a3a52",
+          borderWidth:     1,
+          titleColor:      "#e8edf5",
+          bodyColor:       "#7a8ba8",
+          padding:         10,
+          callbacks: {
+            label: ctx => ` ${ctx.dataset.label}: ${
+              typeof ctx.parsed.y === "number" ? ctx.parsed.y.toFixed(3) : "—"
+            }`
+          }
+        }
+      },
+      scales: {
+        x: {
+          grid:   { color: "#1c2535" },
+          ticks:  { color: "#4a5a72", maxTicksLimit: 8, maxRotation: 0 }
+        },
+        y: {
+          grid:   { color: "#1c2535" },
+          ticks:  { color: "#4a5a72" }
+        }
+      }
     }
   });
 
-  if (mode === "all" || mode === "output") {
-    datasets.push({ label:"Output", data:outputData, borderColor:"#3b82f6" });
+  /* ── Helpers ───────────────────────────────────────────────── */
+
+  /**
+   * Safely format a number; returns fallback string if invalid.
+   * @param {*} val
+   * @param {number} dp - decimal places
+   * @param {string} fallback
+   */
+  function fmt(val, dp = 2, fallback = "—") {
+    const n = parseFloat(val);
+    return Number.isFinite(n) ? n.toFixed(dp) : fallback;
   }
 
-  if (mode === "all" || mode === "light") {
-    datasets.push({ label:"Light", data:lightData, borderColor:"#facc15" });
+  /** Set text + remove loading class from a card-value element. */
+  function setVal(id, text) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.textContent = text;
+    el.classList.remove("loading");
   }
 
-  if (mode === "all" || mode === "performance") {
-    datasets.push({ label:"Performance", data:perfData, borderColor:"#f97316" });
+  /** Show an error banner. */
+  function showError(msg) {
+    const el = document.getElementById("errorBanner");
+    if (!el) return;
+    el.textContent = "⚠ " + msg;
+    el.style.display = "block";
   }
 
-  chart.data.labels = labels;
-  chart.data.datasets = datasets;
-  chart.update();
-}
+  /** Hide chart loading overlay. */
+  function hideChartLoader() {
+    const el = document.getElementById("chartLoader");
+    if (el) el.classList.add("hidden");
+  }
 
+  /** Update the "last updated" timestamp. */
+  function touchTimestamp() {
+    const el = document.getElementById("lastUpdated");
+    if (!el) return;
+    const now = new Date();
+    const hh  = String(now.getHours()).padStart(2, "0");
+    const mm  = String(now.getMinutes()).padStart(2, "0");
+    const ss  = String(now.getSeconds()).padStart(2, "0");
+    el.textContent = `Updated ${hh}:${mm}:${ss}`;
+  }
+
+  /* ── Firebase Listeners ────────────────────────────────────── */
+
+  if (db) {
+    // ── Raw sensor data (latest record) ──────────────────────
+    db.ref("solar_system/raw_data")
+      .limitToLast(1)
+      .on("value", snap => {
+        if (!snap.exists()) return;
+        const records = snap.val();
+        const d       = Object.values(records)[0];
+
+        if (!d || typeof d !== "object") return;
+
+        setVal("valLight",  fmt(d.light,    2) + " lux");
+        setVal("valTemp",   fmt(d.temp,     1) + " °C");
+        setVal("valHum",    fmt(d.humidity, 1) + " %");
+        setVal("valOutput", fmt(d.output,   3) + " W");
+
+        touchTimestamp();
+      }, err => showError("Sensor read error: " + err.message));
+
+    // ── AI + ML intelligence ──────────────────────────────────
+    db.ref("solar_system/intelligence")
+      .on("value", snap => {
+        if (!snap.exists()) return;
+        const d = snap.val();
+
+        if (!d || typeof d !== "object") return;
+
+        // Confidence
+        const conf = d.confidence != null ? String(d.confidence) : "—";
+        setVal("valConfidence", conf);
+
+        // Health (100 − drop_percentage)
+        const drop   = parseFloat(d.drop_percentage);
+        const health = Number.isFinite(drop) ? Math.max(0, 100 - drop) : null;
+        setVal("valHealth", health !== null ? health.toFixed(0) + " %" : "—");
+        const hBar = document.getElementById("healthBar");
+        if (hBar && health !== null) hBar.style.width = health + "%";
+
+        // Status
+        const statusBox = document.getElementById("statusBox");
+        if (statusBox && d.status) {
+          const s = String(d.status).toUpperCase();
+          statusBox.className = "status-card";
+          if (s.includes("NORMAL")) {
+            statusBox.classList.add("status-normal");
+            statusBox.textContent = "NORMAL";
+          } else if (s.includes("MONITOR")) {
+            statusBox.classList.add("status-monitor");
+            statusBox.textContent = "MONITOR";
+          } else if (s.includes("CLEAN")) {
+            statusBox.classList.add("status-clean");
+            statusBox.textContent = "CLEAN REQUIRED";
+          } else {
+            statusBox.classList.add("status-pending");
+            statusBox.textContent = s;
+          }
+        }
+
+        // ML fields
+        setVal("valPredicted", fmt(d.predicted_output, 3) + " W");
+
+        const eff    = parseFloat(d.efficiency);
+        const effPct = Number.isFinite(eff) ? (eff * 100).toFixed(1) + " %" : "—";
+        setVal("valEfficiency", effPct);
+        const eBar = document.getElementById("effBar");
+        if (eBar && Number.isFinite(eff)) {
+          eBar.style.width = Math.min(eff * 100, 100) + "%";
+        }
+
+        const days = d.days_to_clean != null ? String(d.days_to_clean) : "—";
+        setVal("valDays", days);
+
+      }, err => showError("Intelligence read error: " + err.message));
+
+    // ── Chart: raw time-series (last 30 points) ───────────────
+    db.ref("solar_system/raw_data")
+      .limitToLast(30)
+      .on("value", snap => {
+        if (!snap.exists()) return;
+        const records = snap.val();
+
+        chartData.labels = [];
+        chartData.output = [];
+        chartData.light  = [];
+
+        Object.keys(records).sort().forEach(k => {
+          const r = records[k];
+          chartData.labels.push(k);
+          chartData.output.push(typeof r.output === "number" ? r.output : null);
+          chartData.light.push(typeof r.light  === "number" ? r.light  : null);
+        });
+
+        refreshChart();
+      }, err => showError("Chart data error: " + err.message));
+
+    // ── Chart: daily performance ──────────────────────────────
+    db.ref("solar_system/daily_summary")
+      .on("value", snap => {
+        if (!snap.exists()) return;
+        const daily = snap.val();
+
+        chartData.performance = [];
+
+        Object.keys(daily).sort().forEach(day => {
+          const d       = daily[day];
+          const maxL    = parseFloat(d.max_light);
+          const maxO    = parseFloat(d.max_output);
+          const ratio   = (Number.isFinite(maxL) && maxL > 0 && Number.isFinite(maxO))
+                          ? maxO / maxL
+                          : null;
+          chartData.performance.push(ratio);
+        });
+
+        refreshChart();
+      }, err => showError("Daily data error: " + err.message));
+  }
+
+  /* ── Chart Refresh ─────────────────────────────────────────── */
+
+  /**
+   * Push latest chartData into Chart.js datasets and update.
+   * Handles the case where performance has fewer points than raw data.
+   */
+  function refreshChart() {
+    const c = chart;
+
+    // Pad performance array to match raw-data label length (null = gap)
+    const rawLen  = chartData.labels.length;
+    const perfLen = chartData.performance.length;
+    let paddedPerf;
+    if (perfLen === 0) {
+      paddedPerf = new Array(rawLen).fill(null);
+    } else if (perfLen < rawLen) {
+      // Append performance at the end (daily summary covers full days)
+      paddedPerf = [
+        ...new Array(rawLen - perfLen).fill(null),
+        ...chartData.performance
+      ];
+    } else {
+      paddedPerf = chartData.performance.slice(-rawLen);
+    }
+
+    c.data.labels          = chartData.labels;
+    c.data.datasets[0].data = chartData.output;
+    c.data.datasets[1].data = chartData.light;
+    c.data.datasets[2].data = paddedPerf;
+
+    // Respect visibility toggles
+    c.data.datasets[0].hidden = !datasetVisible.output;
+    c.data.datasets[1].hidden = !datasetVisible.light;
+    c.data.datasets[2].hidden = !datasetVisible.performance;
+
+    c.update("none"); // skip animation on data refresh for perf
+    hideChartLoader();
+  }
+
+  /* ── Dataset Toggle ────────────────────────────────────────── */
+
+  /**
+   * Toggle a chart dataset on/off.
+   * @param {string} key  - "output" | "light" | "performance"
+   * @param {HTMLElement} btn
+   */
+  function toggleDataset(key, btn) {
+    if (!datasetVisible.hasOwnProperty(key)) return;
+
+    datasetVisible[key] = !datasetVisible[key];
+    btn.classList.toggle("active", datasetVisible[key]);
+
+    const dsMap = { output: 0, light: 1, performance: 2 };
+    const idx   = dsMap[key];
+    if (idx !== undefined) {
+      chart.data.datasets[idx].hidden = !datasetVisible[key];
+      chart.update();
+    }
+  }
+
+  /* ── Public API ────────────────────────────────────────────── */
+  return { toggleDataset };
+
+})();
 </script>
-
 </body>
 </html>
