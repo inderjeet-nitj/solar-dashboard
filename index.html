@@ -10,7 +10,7 @@
   <style>
     body {
       margin: 0;
-      font-family: system-ui, -apple-system, Segoe UI, Roboto;
+      font-family: system-ui;
       background: #0b1220;
       color: #e5e7eb;
     }
@@ -22,53 +22,35 @@
       border-bottom: 1px solid #1f2937;
     }
 
-    h1 {
-      margin: 0;
-      font-size: 20px;
-    }
+    h1 { font-size: 20px; margin: 0; }
 
-    .live {
-      color: #22c55e;
+    .section-title {
+      padding: 10px 20px;
       font-size: 14px;
-    }
-
-    .alert {
-      display: none;
-      background: #dc2626;
-      padding: 10px;
-      text-align: center;
-      font-weight: 500;
+      color: #9ca3af;
     }
 
     .grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(200px,1fr));
       gap: 16px;
-      padding: 20px;
+      padding: 0 20px 20px;
     }
 
     .card {
       background: #111827;
+      border: 1px solid #1f2937;
       border-radius: 10px;
       padding: 16px;
-      border: 1px solid #1f2937;
     }
 
-    .title {
-      font-size: 12px;
-      color: #9ca3af;
-    }
-
-    .value {
-      font-size: 22px;
-      margin-top: 6px;
-    }
+    .title { font-size: 12px; color: #9ca3af; }
+    .value { font-size: 20px; margin-top: 5px; }
 
     .status {
       padding: 8px;
       border-radius: 6px;
       text-align: center;
-      font-weight: 500;
     }
 
     .normal { background: #065f46; }
@@ -77,13 +59,21 @@
 
     canvas {
       margin: 10px 20px;
+      max-height: 250px;
+    }
+
+    .alert {
+      display: none;
+      background: #dc2626;
+      padding: 8px;
+      text-align: center;
     }
 
     .footer {
       text-align: center;
       font-size: 12px;
       color: #9ca3af;
-      margin: 20px;
+      margin: 15px;
     }
   </style>
 </head>
@@ -94,46 +84,35 @@
 
 <div class="header">
   <h1>Solar AI Dashboard</h1>
-  <div id="liveStatus" class="live">● Live</div>
+  <div id="liveStatus">● Live</div>
+</div>
+
+<div class="section-title">Overview</div>
+<div class="grid">
+  <div class="card"><div class="title">Light</div><div class="value" id="light">--</div></div>
+  <div class="card"><div class="title">Temp</div><div class="value" id="temp">--</div></div>
+  <div class="card"><div class="title">Humidity</div><div class="value" id="hum">--</div></div>
+  <div class="card"><div class="title">Output</div><div class="value" id="output">--</div></div>
+</div>
+
+<div class="section-title">AI Insights</div>
+<div class="grid">
+  <div class="card"><div class="title">Status</div><div id="statusBox" class="status">--</div></div>
+  <div class="card"><div class="title">Confidence</div><div class="value" id="confidence">--</div></div>
+  <div class="card"><div class="title">Health</div><div class="value" id="health">--</div></div>
 </div>
 
 <div class="grid">
-  <div class="card"><div class="title">Light</div><div class="value" id="light">Loading...</div></div>
-  <div class="card"><div class="title">Temperature</div><div class="value" id="temp">Loading...</div></div>
-  <div class="card"><div class="title">Humidity</div><div class="value" id="hum">Loading...</div></div>
-  <div class="card"><div class="title">Output</div><div class="value" id="output">Loading...</div></div>
+  <div class="card"><div class="title">Reason</div><div id="reason">--</div></div>
 </div>
 
-<div class="grid">
-  <div class="card">
-    <div class="title">Status</div>
-    <div id="statusBox" class="status">Loading...</div>
-  </div>
-
-  <div class="card">
-    <div class="title">Confidence</div>
-    <div class="value" id="confidence">--</div>
-  </div>
-
-  <div class="card">
-    <div class="title">Health</div>
-    <div class="value" id="health">--</div>
-  </div>
-</div>
-
-<div class="grid">
-  <div class="card">
-    <div class="title">Reason</div>
-    <div id="reason">Loading...</div>
-  </div>
-</div>
-
+<div class="section-title">Analytics</div>
 <canvas id="outputChart"></canvas>
 <canvas id="lightChart"></canvas>
 <canvas id="perfChart"></canvas>
 
 <div class="footer">
-  Last updated: <span id="time">--</span>
+  Updated: <span id="time">--</span>
 </div>
 
 <script>
@@ -150,14 +129,14 @@ const db = firebase.database();
 db.ref("solar_system/raw_data").limitToLast(1).on("value", snap => {
   if (!snap.val()) return;
 
-  const data = Object.values(snap.val())[0];
+  const d = Object.values(snap.val())[0];
 
-  document.getElementById("light").innerText = data.light.toFixed(2);
-  document.getElementById("temp").innerText = data.temp + "°C";
-  document.getElementById("hum").innerText = data.humidity + "%";
-  document.getElementById("output").innerText = data.output.toFixed(2);
+  light.innerText = d.light.toFixed(2);
+  temp.innerText = d.temp + "°C";
+  hum.innerText = d.humidity + "%";
+  output.innerText = d.output.toFixed(2);
 
-  document.getElementById("time").innerText = new Date().toLocaleTimeString();
+  time.innerText = new Date().toLocaleTimeString();
 });
 
 // AI DATA
@@ -165,62 +144,71 @@ db.ref("solar_system/intelligence").on("value", snap => {
   if (!snap.val()) return;
 
   const d = snap.val();
-  const box = document.getElementById("statusBox");
 
-  document.getElementById("confidence").innerText = d.confidence;
-  document.getElementById("reason").innerText = d.reason;
+  confidence.innerText = d.confidence;
+  reason.innerText = d.reason;
 
-  let health = Math.max(0, 100 - d.drop_percentage);
-  document.getElementById("health").innerText = health.toFixed(0) + "%";
+  let healthVal = Math.max(0, 100 - d.drop_percentage);
+  health.innerText = healthVal.toFixed(0) + "%";
 
-  box.className = "status";
+  statusBox.className = "status";
 
   if (d.status.includes("NORMAL")) {
-    box.innerText = "NORMAL";
-    box.classList.add("normal");
+    statusBox.innerText = "NORMAL";
+    statusBox.classList.add("normal");
     alertBox.style.display = "none";
   } 
   else if (d.status.includes("MONITOR")) {
-    box.innerText = "MONITOR";
-    box.classList.add("monitor");
+    statusBox.innerText = "MONITOR";
+    statusBox.classList.add("monitor");
     alertBox.style.display = "none";
   } 
   else {
-    box.innerText = "CLEAN REQUIRED";
-    box.classList.add("clean");
+    statusBox.innerText = "CLEAN REQUIRED";
+    statusBox.classList.add("clean");
     alertBox.style.display = "block";
   }
 });
 
-// CHARTS
-let outputChart = new Chart(document.getElementById("outputChart"), {
+// CHART CONFIG (CLEAN STYLE)
+const chartOptions = {
+  responsive: true,
+  plugins: { legend: { display: false }},
+  scales: {
+    x: { display: false },
+    y: { grid: { color: "#1f2937" } }
+  }
+};
+
+let outputChart = new Chart(outputChart, {
   type: "line",
-  data: { labels: [], datasets: [{ label: "Output", data: [] }] }
+  data: { labels: [], datasets: [{ data: [], borderColor:"#3b82f6", tension:0.4 }] },
+  options: chartOptions
 });
 
-let lightChart = new Chart(document.getElementById("lightChart"), {
+let lightChart = new Chart(lightChart, {
   type: "line",
-  data: { labels: [], datasets: [{ label: "Light", data: [] }] }
+  data: { labels: [], datasets: [{ data: [], borderColor:"#facc15", tension:0.4 }] },
+  options: chartOptions
 });
 
-let perfChart = new Chart(document.getElementById("perfChart"), {
+let perfChart = new Chart(perfChart, {
   type: "line",
-  data: { labels: [], datasets: [{ label: "Performance", data: [] }] }
+  data: { labels: [], datasets: [{ data: [], borderColor:"#f97316", tension:0.4 }] },
+  options: chartOptions
 });
 
-// RAW GRAPH
+// RAW DATA GRAPH
 db.ref("solar_system/raw_data").limitToLast(20).on("value", snap => {
   if (!snap.val()) return;
 
-  let values = snap.val();
-  let labels = [];
-  let out = [];
-  let light = [];
+  let vals = snap.val();
+  let labels = [], out=[], light=[];
 
-  Object.keys(values).forEach(k => {
-    labels.push(k.substring(1,6));
-    out.push(values[k].output);
-    light.push(values[k].light);
+  Object.keys(vals).forEach(k=>{
+    labels.push(k);
+    out.push(vals[k].output);
+    light.push(vals[k].light);
   });
 
   outputChart.data.labels = labels;
@@ -236,15 +224,14 @@ db.ref("solar_system/raw_data").limitToLast(20).on("value", snap => {
 db.ref("solar_system/daily_summary").on("value", snap => {
   if (!snap.val()) return;
 
-  let values = snap.val();
-  let labels = [];
-  let data = [];
+  let vals = snap.val();
+  let labels=[], data=[];
 
-  Object.keys(values).sort().forEach(day => {
-    let d = values[day];
-    if (d.max_light != 0) {
+  Object.keys(vals).sort().forEach(day=>{
+    let d = vals[day];
+    if (d.max_light!=0){
       labels.push(day);
-      data.push(d.max_output / d.max_light);
+      data.push(d.max_output/d.max_light);
     }
   });
 
@@ -254,10 +241,10 @@ db.ref("solar_system/daily_summary").on("value", snap => {
 });
 
 // BLINK
-setInterval(() => {
-  let el = document.getElementById("liveStatus");
-  el.style.opacity = el.style.opacity == 0.5 ? 1 : 0.5;
-}, 500);
+setInterval(()=>{
+  let el=document.getElementById("liveStatus");
+  el.style.opacity=el.style.opacity==0.5?1:0.5;
+},500);
 
 </script>
 
