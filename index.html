@@ -377,6 +377,69 @@
     ::-webkit-scrollbar { width: 6px; }
     ::-webkit-scrollbar-track { background: var(--bg); }
     ::-webkit-scrollbar-thumb { background: var(--border-hi); border-radius: 3px; }
+
+    /* ── Boolean Badge ─────────────────────────────────────────── */
+    .bool-badge {
+      display: inline-block;
+      padding: 3px 10px;
+      border-radius: var(--radius-sm);
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+    .bool-true  { background: rgba(239,68,68,.15);  color: #fca5a5; border: 1px solid rgba(239,68,68,.3); }
+    .bool-false { background: rgba(16,185,129,.12); color: #6ee7b7; border: 1px solid rgba(16,185,129,.25); }
+    .bool-warn  { background: rgba(240,180,41,.12); color: #fbbf24; border: 1px solid rgba(240,180,41,.3); }
+
+    /* ── Trend Label ───────────────────────────────────────────── */
+    .trend-label {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+
+    /* ── Reason Chain ──────────────────────────────────────────── */
+    .reason-chain {
+      margin-top: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+    .reason-item {
+      font-size: 10px;
+      color: var(--text-2);
+      padding: 5px 10px;
+      background: var(--surface-1);
+      border-left: 2px solid var(--accent-blue);
+      border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+      letter-spacing: 0.02em;
+    }
+
+    /* ── Mini Bar ──────────────────────────────────────────────── */
+    .mini-bar-bg {
+      height: 3px;
+      background: var(--border);
+      border-radius: 2px;
+      overflow: hidden;
+      margin-top: 6px;
+    }
+    .mini-bar-fill {
+      height: 100%;
+      border-radius: 2px;
+      transition: width 0.6s ease;
+    }
+
+    /* ── Card Wide ─────────────────────────────────────────────── */
+    .card-wide { grid-column: span 2; }
+    @media (max-width: 900px) { .card-wide { grid-column: span 1; } }
+
+    /* ── Reliability Colours ───────────────────────────────────── */
+    .rel-high   { color: #6ee7b7; }
+    .rel-medium { color: #fbbf24; }
+    .rel-low    { color: #fca5a5; }
   </style>
 </head>
 
@@ -491,6 +554,217 @@
       <div class="card">
         <div class="card-label">Days to Next Clean</div>
         <div class="card-value loading" id="valDays">—</div>
+      </div>
+
+    </div>
+  </section>
+
+  <hr class="divider" />
+
+  <!-- ── Trend Analysis ── -->
+  <section class="section">
+    <div class="section-label">Trend Analysis</div>
+    <div class="grid-4">
+
+      <div class="card">
+        <div class="card-label">Trend Direction</div>
+        <div class="card-value loading" id="valTrend">—</div>
+      </div>
+
+      <div class="card">
+        <div class="card-label">Trend Slope</div>
+        <div class="card-value loading" id="valTrendSlope">—</div>
+      </div>
+
+      <div class="card">
+        <div class="card-label">Mann-Kendall τ</div>
+        <div class="card-value loading" id="valMkTau">—</div>
+      </div>
+
+      <div class="card">
+        <div class="card-label">EWMA Direction</div>
+        <div class="card-value loading" id="valEwmaDir">—</div>
+      </div>
+
+    </div>
+  </section>
+
+  <hr class="divider" />
+
+  <!-- ── Model Quality ── -->
+  <section class="section">
+    <div class="section-label">Model Quality</div>
+    <div class="grid-4">
+
+      <div class="card">
+        <div class="card-label">Model Reliability</div>
+        <div class="card-value loading" id="valModelRel">—</div>
+      </div>
+
+      <div class="card">
+        <div class="card-label">Model R²</div>
+        <div class="card-value loading" id="valModelR2">—</div>
+      </div>
+
+      <div class="card">
+        <div class="card-label">Reference Output</div>
+        <div class="card-value loading" id="valRefOutput">—</div>
+      </div>
+
+      <div class="card">
+        <div class="card-label">ML Drop vs Reference</div>
+        <div class="card-value loading" id="valMlDrop">—</div>
+      </div>
+
+    </div>
+  </section>
+
+  <hr class="divider" />
+
+  <!-- ── Environment & Anomaly ── -->
+  <section class="section">
+    <div class="section-label">Environment &amp; Anomaly</div>
+    <div class="grid-4">
+
+      <div class="card">
+        <div class="card-label">Env. Affected</div>
+        <div style="margin-top:8px"><span class="bool-badge bool-false" id="valEnvAffected">—</span></div>
+      </div>
+
+      <div class="card">
+        <div class="card-label">Env. Reason</div>
+        <div class="card-value loading" style="font-size:14px;letter-spacing:0" id="valEnvReason">—</div>
+      </div>
+
+      <div class="card">
+        <div class="card-label">Env. Consecutive Days</div>
+        <div class="card-value loading" id="valEnvConsec">—</div>
+      </div>
+
+      <div class="card">
+        <div class="card-label">Anomaly Detected</div>
+        <div style="margin-top:8px"><span class="bool-badge bool-false" id="valAnomaly">—</span></div>
+        <div class="card-label" style="margin-top:8px;margin-bottom:0">MAD Score</div>
+        <div class="card-value loading" style="font-size:16px;margin-top:4px" id="valAnomalyScore">—</div>
+      </div>
+
+    </div>
+  </section>
+
+  <hr class="divider" />
+
+  <!-- ── Data Quality & Diagnostics ── -->
+  <section class="section">
+    <div class="section-label">Data Quality &amp; Diagnostics</div>
+    <div class="grid-4">
+
+      <div class="card">
+        <div class="card-label">Data Quality</div>
+        <div class="card-value loading" id="valDataQuality">—</div>
+        <div class="mini-bar-bg">
+          <div class="mini-bar-fill" id="dataQualityBar" style="width:0%;background:var(--accent-green)"></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-label">Missing Data Ratio</div>
+        <div class="card-value loading" id="valMissingRatio">—</div>
+      </div>
+
+      <div class="card">
+        <div class="card-label">Noise Std Residual</div>
+        <div class="card-value loading" id="valNoiseStd">—</div>
+      </div>
+
+      <div class="card">
+        <div class="card-label">Sensor Noise</div>
+        <div style="margin-top:8px"><span class="bool-badge bool-false" id="valSensorNoise">—</span></div>
+        <div class="card-label" style="margin-top:8px;margin-bottom:4px">Clipping</div>
+        <span class="bool-badge bool-false" id="valClipping">—</span>
+        <div class="card-label" style="margin-top:8px;margin-bottom:4px">Intraday Collapse</div>
+        <span class="bool-badge bool-false" id="valIntradayCollapse">—</span>
+      </div>
+
+    </div>
+  </section>
+
+  <hr class="divider" />
+
+  <!-- ── System State ── -->
+  <section class="section">
+    <div class="section-label">System State</div>
+    <div class="grid-4">
+
+      <div class="card">
+        <div class="card-label">Natural Recovery</div>
+        <div style="margin-top:8px"><span class="bool-badge bool-false" id="valNaturalRecovery">—</span></div>
+      </div>
+
+      <div class="card">
+        <div class="card-label">Post-Cleaning Active</div>
+        <div style="margin-top:8px"><span class="bool-badge bool-false" id="valPostCleaning">—</span></div>
+      </div>
+
+      <div class="card">
+        <div class="card-label">Sample Count</div>
+        <div class="card-value loading" id="valSampleCount">—</div>
+      </div>
+
+      <div class="card">
+        <div class="card-label">History Days</div>
+        <div class="card-value loading" id="valHistoryDays">—</div>
+      </div>
+
+    </div>
+  </section>
+
+  <hr class="divider" />
+
+  <!-- ── Decision Reasoning ── -->
+  <section class="section">
+    <div class="section-label">Decision Reasoning</div>
+    <div class="grid-3">
+
+      <div class="card">
+        <div class="card-label">Primary Reason</div>
+        <div class="card-value loading" style="font-size:13px;letter-spacing:0;line-height:1.4" id="valReason">—</div>
+      </div>
+
+      <div class="card card-wide">
+        <div class="card-label">Reason Chain</div>
+        <div class="reason-chain" id="reasonChain">
+          <div class="reason-item" style="color:var(--text-3)">Awaiting data…</div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <hr class="divider" />
+
+  <!-- ── Adaptive Thresholds ── -->
+  <section class="section">
+    <div class="section-label">Adaptive Thresholds</div>
+    <div class="grid-4">
+
+      <div class="card">
+        <div class="card-label">Drop High</div>
+        <div class="card-value loading" id="valDropHigh">—</div>
+      </div>
+
+      <div class="card">
+        <div class="card-label">Drop Moderate</div>
+        <div class="card-value loading" id="valDropModerate">—</div>
+      </div>
+
+      <div class="card">
+        <div class="card-label">Env High Temp</div>
+        <div class="card-value loading" id="valEnvHighTemp">—</div>
+      </div>
+
+      <div class="card">
+        <div class="card-label">Auto-Clean Ratio</div>
+        <div class="card-value loading" id="valAutoCleanRatio">—</div>
       </div>
 
     </div>
@@ -664,6 +938,32 @@ const App = (() => {
     el.style.display = "block";
   }
 
+  /**
+   * Set a boolean badge element.
+   * @param {string} id        - element id
+   * @param {*}      val       - value to evaluate as boolean
+   * @param {boolean} trueGood - if true, true=green; if false, true=red (alert)
+   */
+  function setBool(id, val, trueGood) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    if (val === null || val === undefined) { el.textContent = "—"; return; }
+    const isTrue = Boolean(val);
+    el.textContent = isTrue ? "YES" : "NO";
+    el.className = "bool-badge";
+    if (trueGood === true)       el.classList.add(isTrue ? "bool-false" : "bool-false"); // green when true
+    else if (trueGood === false) el.classList.add(isTrue ? "bool-true"  : "bool-false"); // red when true
+    else                         el.classList.add(isTrue ? "bool-warn"  : "bool-false"); // warn when true
+
+    // Fix: trueGood=true means true is positive (green), false is neutral
+    el.className = "bool-badge";
+    if (trueGood === true) {
+      el.classList.add(isTrue ? "bool-warn" : "bool-false");
+    } else {
+      el.classList.add(isTrue ? "bool-true" : "bool-false");
+    }
+  }
+
   /** Hide chart loading overlay. */
   function hideChartLoader() {
     const el = document.getElementById("chartLoader");
@@ -714,12 +1014,21 @@ const App = (() => {
         const conf = d.confidence != null ? String(d.confidence) : "—";
         setVal("valConfidence", conf);
 
-        // Health (100 − drop_percentage)
-        const drop   = parseFloat(d.drop_percentage);
-        const health = Number.isFinite(drop) ? Math.max(0, 100 - drop) : null;
-        setVal("valHealth", health !== null ? health.toFixed(0) + " %" : "—");
-        const hBar = document.getElementById("healthBar");
-        if (hBar && health !== null) hBar.style.width = health + "%";
+        // ── Health: use actual health_score + health_label from pipeline ──
+        const hs = parseFloat(d.health_score);
+        if (Number.isFinite(hs)) {
+          const hLabel = d.health_label ? ` (${d.health_label})` : "";
+          setVal("valHealth", hs.toFixed(0) + hLabel);
+          const hBar = document.getElementById("healthBar");
+          if (hBar) hBar.style.width = Math.min(hs, 100) + "%";
+        } else {
+          // Fallback: 100 − drop_percentage
+          const drop   = parseFloat(d.drop_percentage);
+          const health = Number.isFinite(drop) ? Math.max(0, 100 - drop) : null;
+          setVal("valHealth", health !== null ? health.toFixed(0) + " %" : "—");
+          const hBar = document.getElementById("healthBar");
+          if (hBar && health !== null) hBar.style.width = health + "%";
+        }
 
         // Status
         const statusBox = document.getElementById("statusBox");
@@ -754,6 +1063,84 @@ const App = (() => {
 
         const days = d.days_to_clean != null ? String(d.days_to_clean) : "—";
         setVal("valDays", days);
+
+        // ── Trend Analysis ────────────────────────────────────────
+        if (d.trend) {
+          const tEl = document.getElementById("valTrend");
+          if (tEl) {
+            tEl.textContent = String(d.trend);
+            tEl.classList.remove("loading");
+            const t = d.trend.toString().toLowerCase();
+            tEl.style.color = t.includes("degrad") || t.includes("down") ? "var(--accent-red)"
+                            : t.includes("improv") || t.includes("up")   ? "var(--accent-green)"
+                            : "var(--text-1)";
+          }
+        }
+        setVal("valTrendSlope",  d.trend_slope   != null ? parseFloat(d.trend_slope).toFixed(5)  : "—");
+        setVal("valMkTau",       d.trend_mk_tau  != null ? parseFloat(d.trend_mk_tau).toFixed(3)  : "—");
+        setVal("valEwmaDir",     d.trend_ewma_dir != null ? String(d.trend_ewma_dir)              : "—");
+
+        // ── Model Quality ─────────────────────────────────────────
+        if (d.model_reliability) {
+          const relEl = document.getElementById("valModelRel");
+          if (relEl) {
+            relEl.textContent = String(d.model_reliability);
+            relEl.classList.remove("loading");
+            const r = d.model_reliability.toString().toUpperCase();
+            relEl.className = "card-value " +
+              (r === "HIGH" ? "rel-high" : r === "MEDIUM" ? "rel-medium" : "rel-low");
+          }
+        }
+        setVal("valModelR2",    d.model_r2     != null ? parseFloat(d.model_r2).toFixed(4)    : "—");
+        setVal("valRefOutput",  d.reference_output != null ? fmt(d.reference_output, 3) + " W" : "—");
+        setVal("valMlDrop",     d.ml_drop_vs_reference != null ? fmt(d.ml_drop_vs_reference, 2) + " %" : "—");
+
+        // ── Environment & Anomaly ─────────────────────────────────
+        setBool("valEnvAffected", d.env_affected, false); // true=bad
+        setVal("valEnvReason",  d.env_reason   || "—");
+        setVal("valEnvConsec",  d.env_consecutive_days != null ? String(d.env_consecutive_days) : "—");
+        setBool("valAnomaly",   d.anomaly_detected, false); // true=bad
+        setVal("valAnomalyScore", d.anomaly_mad_score != null ? fmt(d.anomaly_mad_score, 2) : "—");
+
+        // ── Data Quality & Diagnostics ────────────────────────────
+        const dq = parseFloat(d.data_quality);
+        setVal("valDataQuality",   Number.isFinite(dq) ? (dq * 100).toFixed(0) + " %" : "—");
+        const dqBar = document.getElementById("dataQualityBar");
+        if (dqBar && Number.isFinite(dq)) {
+          dqBar.style.width = Math.min(dq * 100, 100) + "%";
+          dqBar.style.background = dq >= 0.7 ? "var(--accent-green)" : dq >= 0.4 ? "var(--accent-yellow)" : "var(--accent-red)";
+        }
+        setVal("valMissingRatio",  d.missing_data_ratio   != null ? fmt(d.missing_data_ratio, 3)   : "—");
+        setVal("valNoiseStd",      d.noise_std_residual   != null ? fmt(d.noise_std_residual, 4)   : "—");
+        setBool("valSensorNoise",     d.sensor_noise_detected, false);
+        setBool("valClipping",        d.clipping_detected,     false);
+        setBool("valIntradayCollapse", d.intraday_collapse,    false);
+
+        // ── System State ──────────────────────────────────────────
+        setBool("valNaturalRecovery", d.natural_recovery_detected, true);  // true=good
+        setBool("valPostCleaning",    d.post_cleaning_active,      true);  // true=info (warn)
+        setVal("valSampleCount",  d.sample_count  != null ? String(d.sample_count)  : "—");
+        setVal("valHistoryDays",  d.history_days  != null ? String(d.history_days)  : "—");
+
+        // ── Decision Reasoning ────────────────────────────────────
+        setVal("valReason", d.reason || "—");
+        const rcEl = document.getElementById("reasonChain");
+        if (rcEl && Array.isArray(d.reason_chain) && d.reason_chain.length > 0) {
+          rcEl.innerHTML = d.reason_chain
+            .map(r => `<div class="reason-item">${String(r)}</div>`)
+            .join("");
+        } else if (rcEl && d.reason) {
+          rcEl.innerHTML = `<div class="reason-item">${String(d.reason)}</div>`;
+        }
+
+        // ── Adaptive Thresholds ───────────────────────────────────
+        const at = d.adaptive_thresholds;
+        if (at && typeof at === "object") {
+          setVal("valDropHigh",       at.drop_high       != null ? fmt(at.drop_high, 2) + " %"      : "—");
+          setVal("valDropModerate",   at.drop_moderate   != null ? fmt(at.drop_moderate, 2) + " %"  : "—");
+          setVal("valEnvHighTemp",    at.env_high_temp   != null ? fmt(at.env_high_temp, 1) + " °C" : "—");
+          setVal("valAutoCleanRatio", at.auto_clean_ratio != null ? fmt(at.auto_clean_ratio, 3)     : "—");
+        }
 
       }, err => showError("Intelligence read error: " + err.message));
 
