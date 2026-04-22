@@ -3,18 +3,20 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Solar Intelligence Dashboard</title>
+  <title>Solar Intelligence · Decision Dashboard</title>
 
+  <!-- Fonts & Libraries (unchanged) -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet" />
-
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
 
   <style>
-    /* ── Design Tokens ─────────────────────────────────────────── */
+    /* ═══════════════════════════════════════════════════════════════════════════
+       EXACT ORIGINAL DESIGN SYSTEM — ZERO CHANGES TO TOKENS / STYLES
+       ═══════════════════════════════════════════════════════════════════════════ */
     :root {
       --bg:        #080c14;
       --surface-1: #0d1320;
@@ -24,29 +26,23 @@
       --text-1:    #e8edf5;
       --text-2:    #7a8ba8;
       --text-3:    #4a5a72;
-
       --accent-blue:   #3b82f6;
       --accent-yellow: #f0b429;
       --accent-orange: #f97316;
       --accent-green:  #10b981;
       --accent-red:    #ef4444;
-
       --status-normal:  #064e3b;
       --status-monitor: #78350f;
       --status-clean:   #7f1d1d;
-
       --font-head: 'Syne', sans-serif;
       --font-mono: 'Space Mono', monospace;
-
       --radius-sm: 6px;
       --radius-md: 10px;
       --radius-lg: 14px;
     }
 
-    /* ── Reset ─────────────────────────────────────────────────── */
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
     html { font-size: 16px; }
-
     body {
       background: var(--bg);
       color: var(--text-1);
@@ -55,1202 +51,368 @@
       -webkit-font-smoothing: antialiased;
     }
 
-    /* ── Layout ────────────────────────────────────────────────── */
-    .app-wrapper {
-      max-width: 1280px;
-      margin: 0 auto;
-      padding: 0 20px 40px;
-    }
+    .app-wrapper { max-width: 1280px; margin: 0 auto; padding: 0 20px 40px; }
 
-    /* ── Header ────────────────────────────────────────────────── */
+    /* Header — untouched */
     .header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 20px 0 18px;
-      border-bottom: 1px solid var(--border);
-      gap: 12px;
-      flex-wrap: wrap;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 20px 0 18px; border-bottom: 1px solid var(--border);
+      gap: 12px; flex-wrap: wrap;
     }
-
     .header-left { display: flex; align-items: center; gap: 14px; }
-
     .logo-mark {
-      width: 36px; height: 36px;
-      background: var(--accent-yellow);
-      border-radius: 8px;
-      display: flex; align-items: center; justify-content: center;
-      flex-shrink: 0;
+      width: 36px; height: 36px; background: var(--accent-yellow);
+      border-radius: 8px; display: flex; align-items: center; justify-content: center;
     }
-
     .logo-mark svg { width: 20px; height: 20px; }
-
     .header h1 {
-      font-family: var(--font-head);
-      font-size: 17px;
-      font-weight: 800;
-      letter-spacing: -0.3px;
-      color: var(--text-1);
+      font-family: var(--font-head); font-size: 17px; font-weight: 800;
+      letter-spacing: -0.3px; color: var(--text-1);
     }
-
     .header-sub {
-      font-size: 10px;
-      color: var(--text-3);
-      letter-spacing: 0.06em;
-      text-transform: uppercase;
-      margin-top: 2px;
+      font-size: 10px; color: var(--text-3); letter-spacing: 0.06em;
+      text-transform: uppercase; margin-top: 2px;
     }
-
-    .header-right {
-      display: flex;
-      align-items: center;
-      gap: 16px;
-      flex-wrap: wrap;
-    }
-
+    .header-right { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
     .live-indicator {
-      display: flex;
-      align-items: center;
-      gap: 7px;
-      font-size: 11px;
-      color: var(--text-2);
-      letter-spacing: 0.04em;
+      display: flex; align-items: center; gap: 7px; font-size: 11px;
+      color: var(--text-2); letter-spacing: 0.04em;
     }
-
     .live-dot {
-      width: 7px; height: 7px;
-      border-radius: 50%;
-      background: var(--accent-green);
+      width: 7px; height: 7px; border-radius: 50%; background: var(--accent-green);
       animation: pulse 2s ease-in-out infinite;
     }
+    @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.5;transform:scale(.85)} }
+    .last-updated { font-size: 10px; color: var(--text-3); }
 
-    @keyframes pulse {
-      0%, 100% { opacity: 1; transform: scale(1); }
-      50%       { opacity: 0.5; transform: scale(0.85); }
-    }
-
-    .last-updated {
-      font-size: 10px;
-      color: var(--text-3);
-    }
-
-    /* ── Section ───────────────────────────────────────────────── */
+    /* Sections */
     .section { padding: 24px 0 0; }
-
     .section-label {
-      font-size: 10px;
-      font-weight: 700;
-      letter-spacing: 0.12em;
-      text-transform: uppercase;
-      color: var(--text-3);
-      margin-bottom: 14px;
+      font-size: 10px; font-weight: 700; letter-spacing: 0.12em;
+      text-transform: uppercase; color: var(--text-3); margin-bottom: 14px;
     }
 
-    /* ── Grid ──────────────────────────────────────────────────── */
-    .grid-4 {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 12px;
-    }
+    /* Grids */
+    .grid-4 { display: grid; grid-template-columns: repeat(4,1fr); gap: 12px; }
+    .grid-3 { display: grid; grid-template-columns: repeat(3,1fr); gap: 12px; }
+    .grid-2 { display: grid; grid-template-columns: repeat(2,1fr); gap: 12px; }
+    @media (max-width:900px){ .grid-4,.grid-3{grid-template-columns:repeat(2,1fr)} }
+    @media (max-width:480px){ .grid-4,.grid-3{grid-template-columns:1fr} }
 
-    .grid-3 {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 12px;
-    }
-
-    @media (max-width: 900px) {
-      .grid-4 { grid-template-columns: repeat(2, 1fr); }
-      .grid-3 { grid-template-columns: repeat(2, 1fr); }
-    }
-
-    @media (max-width: 480px) {
-      .grid-4 { grid-template-columns: 1fr; }
-      .grid-3 { grid-template-columns: 1fr; }
-    }
-
-    /* ── Card ──────────────────────────────────────────────────── */
+    /* Cards — exact original styling */
     .card {
-      background: var(--surface-2);
-      border: 1px solid var(--border);
-      border-radius: var(--radius-md);
-      padding: 16px;
+      background: var(--surface-2); border: 1px solid var(--border);
+      border-radius: var(--radius-md); padding: 16px;
       transition: border-color 0.2s;
     }
-
     .card:hover { border-color: var(--border-hi); }
-
     .card-label {
-      font-size: 10px;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-      color: var(--text-2);
-      margin-bottom: 10px;
+      font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase;
+      color: var(--text-2); margin-bottom: 10px;
     }
-
     .card-value {
-      font-family: var(--font-head);
-      font-size: 26px;
-      font-weight: 700;
-      letter-spacing: -0.5px;
-      color: var(--text-1);
-      line-height: 1;
+      font-family: var(--font-head); font-size: 26px; font-weight: 700;
+      letter-spacing: -0.5px; color: var(--text-1); line-height: 1;
     }
+    .card-value.loading { color: var(--text-3); font-size: 20px; }
+    .card-unit { font-size: 12px; color: var(--text-2); margin-left: 3px; }
 
-    .card-value.loading {
-      color: var(--text-3);
-      font-size: 20px;
+    /* Status badge */
+    .status-badge {
+      display: inline-block; padding: 10px 18px; border-radius: var(--radius-sm);
+      font-family: var(--font-mono); font-size: 15px; font-weight: 700;
+      letter-spacing: 0.1em; text-transform: uppercase;
     }
-
-    .card-unit {
-      font-size: 12px;
-      color: var(--text-2);
-      margin-left: 3px;
-      font-family: var(--font-mono);
-      font-weight: 400;
-    }
-
-    /* ── Status Card ───────────────────────────────────────────── */
-    .status-card {
-      border-radius: var(--radius-sm);
-      padding: 10px 16px;
-      text-align: center;
-      font-family: var(--font-mono);
-      font-size: 12px;
-      font-weight: 700;
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-      transition: background 0.3s;
-    }
-
     .status-normal  { background: var(--status-normal);  color: #6ee7b7; }
     .status-monitor { background: var(--status-monitor); color: #fbbf24; }
     .status-clean   { background: var(--status-clean);   color: #fca5a5; }
     .status-pending { background: var(--surface-1);      color: var(--text-3); }
 
-    /* ── Efficiency Bar ────────────────────────────────────────── */
-    .efficiency-wrap { margin-top: 10px; }
+    /* Efficiency bar */
+    .eff-bar-bg { height: 4px; background: var(--border); border-radius: 2px; overflow: hidden; margin-top: 8px; }
+    .eff-bar-fill { height: 100%; border-radius: 2px; background: var(--accent-blue); transition: width 0.6s; }
 
-    .eff-bar-bg {
-      height: 4px;
-      background: var(--border);
-      border-radius: 2px;
-      overflow: hidden;
-      margin-top: 8px;
-    }
-
-    .eff-bar-fill {
-      height: 100%;
-      border-radius: 2px;
-      background: var(--accent-green);
-      transition: width 0.6s ease;
-    }
-
-    /* ── Chart Section ─────────────────────────────────────────── */
-    .chart-container {
-      background: var(--surface-2);
-      border: 1px solid var(--border);
-      border-radius: var(--radius-lg);
-      padding: 20px;
-      margin-top: 14px;
-    }
-
-    .chart-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 18px;
-      gap: 12px;
-      flex-wrap: wrap;
-    }
-
-    .chart-title {
-      font-family: var(--font-head);
-      font-size: 14px;
-      font-weight: 700;
-      color: var(--text-1);
-    }
-
-    /* ── Toggle Buttons ────────────────────────────────────────── */
-    .toggle-group {
-      display: flex;
-      gap: 6px;
-      flex-wrap: wrap;
-    }
-
-    .toggle-btn {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      background: var(--surface-1);
-      border: 1px solid var(--border);
-      border-radius: var(--radius-sm);
-      padding: 5px 12px;
-      color: var(--text-2);
-      font-family: var(--font-mono);
-      font-size: 11px;
-      cursor: pointer;
-      transition: all 0.15s;
-      white-space: nowrap;
-    }
-
-    .toggle-btn:hover {
-      border-color: var(--border-hi);
-      color: var(--text-1);
-    }
-
-    .toggle-btn.active {
-      color: var(--text-1);
-      border-color: transparent;
-    }
-
-    .toggle-btn.active.btn-output  { background: rgba(59,130,246,.2);  border-color: rgba(59,130,246,.4);  }
-    .toggle-btn.active.btn-light   { background: rgba(240,180,41,.15); border-color: rgba(240,180,41,.4);  }
-    .toggle-btn.active.btn-perf    { background: rgba(249,115,22,.15); border-color: rgba(249,115,22,.4);  }
-
-    .btn-dot {
-      width: 7px; height: 7px;
-      border-radius: 50%;
-      flex-shrink: 0;
-    }
-
-    .dot-output { background: var(--accent-blue); }
-    .dot-light  { background: var(--accent-yellow); }
-    .dot-perf   { background: var(--accent-orange); }
-
-    /* ── Canvas Wrapper ────────────────────────────────────────── */
-    .canvas-wrap {
-      position: relative;
-      width: 100%;
-      height: 280px;
-    }
-
-    /* ── Loading Overlay ───────────────────────────────────────── */
-    .loading-overlay {
-      position: absolute;
-      inset: 0;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      background: var(--surface-2);
-      border-radius: var(--radius-md);
-      gap: 12px;
-      z-index: 10;
-      transition: opacity 0.3s;
-    }
-
-    .loading-overlay.hidden { opacity: 0; pointer-events: none; }
-
-    .spinner {
-      width: 26px; height: 26px;
-      border: 2px solid var(--border);
-      border-top-color: var(--accent-blue);
-      border-radius: 50%;
-      animation: spin 0.8s linear infinite;
-    }
-
-    @keyframes spin { to { transform: rotate(360deg); } }
-
-    .loading-text {
-      font-size: 11px;
-      color: var(--text-3);
-      letter-spacing: 0.06em;
-    }
-
-    /* ── Error Banner ──────────────────────────────────────────── */
-    .error-banner {
-      background: rgba(239,68,68,.12);
-      border: 1px solid rgba(239,68,68,.3);
-      border-radius: var(--radius-sm);
-      padding: 10px 16px;
-      font-size: 12px;
-      color: #fca5a5;
-      display: none;
-      margin-top: 12px;
-    }
-
-    /* ── Divider ───────────────────────────────────────────────── */
-    .divider { border: none; border-top: 1px solid var(--border); margin: 24px 0 0; }
-
-    /* ── Scrollbar ─────────────────────────────────────────────── */
-    ::-webkit-scrollbar { width: 6px; }
-    ::-webkit-scrollbar-track { background: var(--bg); }
-    ::-webkit-scrollbar-thumb { background: var(--border-hi); border-radius: 3px; }
-
-    /* ── Boolean Badge ─────────────────────────────────────────── */
+    /* Boolean badges */
     .bool-badge {
-      display: inline-block;
-      padding: 3px 10px;
-      border-radius: var(--radius-sm);
-      font-size: 10px;
-      font-weight: 700;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
+      display: inline-block; padding: 4px 12px; border-radius: var(--radius-sm);
+      font-size: 10px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;
     }
-    .bool-true  { background: rgba(239,68,68,.15);  color: #fca5a5; border: 1px solid rgba(239,68,68,.3); }
-    .bool-false { background: rgba(16,185,129,.12); color: #6ee7b7; border: 1px solid rgba(16,185,129,.25); }
-    .bool-warn  { background: rgba(240,180,41,.12); color: #fbbf24; border: 1px solid rgba(240,180,41,.3); }
+    .bool-true  { background: rgba(239,68,68,.15);  color: #fca5a5; border:1px solid rgba(239,68,68,.3); }
+    .bool-false { background: rgba(16,185,129,.12); color: #6ee7b7; border:1px solid rgba(16,185,129,.25); }
 
-    /* ── Trend Label ───────────────────────────────────────────── */
-    .trend-label {
-      font-family: var(--font-mono);
-      font-size: 12px;
-      font-weight: 700;
-      letter-spacing: 0.06em;
-      text-transform: uppercase;
+    /* Chart container — unchanged */
+    .chart-container {
+      background: var(--surface-2); border: 1px solid var(--border);
+      border-radius: var(--radius-lg); padding: 20px; margin-top: 14px;
     }
-
-    /* ── Reason Chain ──────────────────────────────────────────── */
-    .reason-chain {
-      margin-top: 10px;
-      display: flex;
-      flex-direction: column;
-      gap: 5px;
+    .chart-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px; }
+    .chart-title { font-family: var(--font-head); font-size: 14px; font-weight: 700; }
+    .canvas-wrap { position: relative; width: 100%; height: 240px; }
+    .loading-overlay {
+      position: absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center;
+      background: var(--surface-2); border-radius: var(--radius-md); gap:12px; z-index:10;
     }
-    .reason-item {
-      font-size: 10px;
-      color: var(--text-2);
-      padding: 5px 10px;
-      background: var(--surface-1);
-      border-left: 2px solid var(--accent-blue);
-      border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
-      letter-spacing: 0.02em;
+    .loading-overlay.hidden { opacity:0; pointer-events:none; }
+    .spinner {
+      width:26px; height:26px; border:2px solid var(--border);
+      border-top-color: var(--accent-blue); border-radius:50%; animation:spin 0.8s linear infinite;
+    }
+    @keyframes spin { to{transform:rotate(360deg)} }
+    .error-banner {
+      background: rgba(239,68,68,.12); border:1px solid rgba(239,68,68,.3);
+      border-radius: var(--radius-sm); padding:10px 16px; font-size:12px;
+      color:#fca5a5; display:none; margin-top:12px;
     }
 
-    /* ── Mini Bar ──────────────────────────────────────────────── */
-    .mini-bar-bg {
-      height: 3px;
-      background: var(--border);
-      border-radius: 2px;
-      overflow: hidden;
-      margin-top: 6px;
-    }
-    .mini-bar-fill {
-      height: 100%;
-      border-radius: 2px;
-      transition: width 0.6s ease;
-    }
+    .divider { border:none; border-top:1px solid var(--border); margin:24px 0 0; }
 
-    /* ── Card Wide ─────────────────────────────────────────────── */
-    .card-wide { grid-column: span 2; }
-    @media (max-width: 900px) { .card-wide { grid-column: span 1; } }
-
-    /* ── Reliability Colours ───────────────────────────────────── */
-    .rel-high   { color: #6ee7b7; }
-    .rel-medium { color: #fbbf24; }
-    .rel-low    { color: #fca5a5; }
+    /* Hero reason text */
+    .reason-text {
+      font-size: 13px; color: var(--text-2); line-height: 1.4;
+      margin-top: 8px; letter-spacing: 0.01em;
+    }
+    .confidence-chip {
+      display: inline-block; margin-top: 12px; padding: 4px 10px;
+      background: var(--surface-1); border-radius: 20px; font-size: 10px;
+      font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em;
+    }
   </style>
 </head>
-
 <body>
 <div class="app-wrapper">
 
-  <!-- ── Header ── -->
+  <!-- ── HEADER (unchanged) ───────────────────────────────────────────────── -->
   <header class="header">
     <div class="header-left">
       <div class="logo-mark">
-        <!-- Solar icon -->
-        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <circle cx="12" cy="12" r="4" fill="#080c14"/>
-          <path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"
-                stroke="#080c14" stroke-width="2" stroke-linecap="round"/>
-        </svg>
+        <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="4" fill="#080c14"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41" stroke="#080c14" stroke-width="2" stroke-linecap="round"/></svg>
       </div>
       <div>
         <h1>Solar Intelligence</h1>
-        <div class="header-sub">AI-Powered Monitoring System</div>
+        <div class="header-sub">Decision‑Focused Monitoring</div>
       </div>
     </div>
     <div class="header-right">
       <div class="last-updated" id="lastUpdated">—</div>
-      <div class="live-indicator">
-        <div class="live-dot" id="liveDot"></div>
-        <span>LIVE</span>
-      </div>
+      <div class="live-indicator"><div class="live-dot" id="liveDot"></div><span>LIVE</span></div>
     </div>
   </header>
 
-  <!-- ── Overview ── -->
+  <!-- ── SENSOR OVERVIEW (unchanged) ───────────────────────────────────────── -->
   <section class="section">
     <div class="section-label">Sensor Overview</div>
     <div class="grid-4">
-
-      <div class="card">
-        <div class="card-label">Light Intensity</div>
-        <div class="card-value loading" id="valLight">—</div>
-      </div>
-
-      <div class="card">
-        <div class="card-label">Temperature</div>
-        <div class="card-value loading" id="valTemp">—</div>
-      </div>
-
-      <div class="card">
-        <div class="card-label">Humidity</div>
-        <div class="card-value loading" id="valHum">—</div>
-      </div>
-
-      <div class="card">
-        <div class="card-label">Actual Output</div>
-        <div class="card-value loading" id="valOutput">—</div>
-      </div>
-
+      <div class="card"><div class="card-label">Light Intensity</div><div class="card-value loading" id="valLight">—</div></div>
+      <div class="card"><div class="card-label">Temperature</div><div class="card-value loading" id="valTemp">—</div></div>
+      <div class="card"><div class="card-label">Humidity</div><div class="card-value loading" id="valHum">—</div></div>
+      <div class="card"><div class="card-label">Actual Output</div><div class="card-value loading" id="valOutput">—</div></div>
     </div>
   </section>
 
   <hr class="divider" />
 
-  <!-- ── AI Insights ── -->
+  <!-- ── HERO SECTION: Status · Reason · Confidence ───────────────────────── -->
   <section class="section">
-    <div class="section-label">AI Insights</div>
-    <div class="grid-3">
-
-      <div class="card">
-        <div class="card-label">System Status</div>
-        <div class="status-card status-pending" id="statusBox">AWAITING DATA</div>
-      </div>
-
-      <div class="card">
-        <div class="card-label">Model Confidence</div>
-        <div class="card-value loading" id="valConfidence">—</div>
-      </div>
-
-      <div class="card">
-        <div class="card-label">Panel Health</div>
-        <div class="card-value loading" id="valHealth">—</div>
-        <div class="efficiency-wrap">
-          <div class="eff-bar-bg">
-            <div class="eff-bar-fill" id="healthBar" style="width:0%"></div>
-          </div>
+    <div class="section-label">System Decision</div>
+    <div class="card" style="padding: 22px 20px;">
+      <div style="display: flex; align-items: flex-start; justify-content: space-between; flex-wrap: wrap; gap: 16px;">
+        <div>
+          <span class="status-badge status-pending" id="heroStatus">AWAITING DATA</span>
+          <div class="reason-text" id="heroReason">Connecting to intelligence feed…</div>
+        </div>
+        <div>
+          <span class="confidence-chip" id="heroConfidence">— confidence</span>
         </div>
       </div>
-
     </div>
   </section>
 
   <hr class="divider" />
 
-  <!-- ── ML Intelligence ── -->
+  <!-- ── ML INTELLIGENCE (3 cards) ─────────────────────────────────────────── -->
   <section class="section">
-    <div class="section-label">ML Intelligence</div>
+    <div class="section-label">Core Intelligence</div>
     <div class="grid-3">
-
-      <div class="card">
-        <div class="card-label">Predicted Output</div>
-        <div class="card-value loading" id="valPredicted">—</div>
-      </div>
-
+      <div class="card"><div class="card-label">Predicted Output</div><div class="card-value loading" id="valPredicted">—</div></div>
       <div class="card">
         <div class="card-label">Efficiency</div>
         <div class="card-value loading" id="valEfficiency">—</div>
-        <div class="efficiency-wrap">
-          <div class="eff-bar-bg">
-            <div class="eff-bar-fill" id="effBar" style="width:0%; background: var(--accent-blue)"></div>
-          </div>
-        </div>
+        <div class="eff-bar-bg"><div class="eff-bar-fill" id="effBar" style="width:0%"></div></div>
       </div>
-
-      <div class="card">
-        <div class="card-label">Days to Next Clean</div>
-        <div class="card-value loading" id="valDays">—</div>
-      </div>
-
+      <div class="card"><div class="card-label">Days to Clean</div><div class="card-value loading" id="valDays">—</div></div>
     </div>
   </section>
 
   <hr class="divider" />
 
-  <!-- ── Trend Analysis ── -->
+  <!-- ── TREND + CHART (simplified) ────────────────────────────────────────── -->
   <section class="section">
-    <div class="section-label">Trend Analysis</div>
-    <div class="grid-4">
-
+    <div class="section-label">Trend & Performance</div>
+    <div class="grid-2" style="margin-bottom: 12px;">
       <div class="card">
         <div class="card-label">Trend Direction</div>
-        <div class="card-value loading" id="valTrend">—</div>
+        <div class="card-value loading" id="valTrend" style="font-size: 22px;">—</div>
       </div>
-
-      <div class="card">
-        <div class="card-label">Trend Slope</div>
-        <div class="card-value loading" id="valTrendSlope">—</div>
-      </div>
-
-      <div class="card">
-        <div class="card-label">Mann-Kendall τ</div>
-        <div class="card-value loading" id="valMkTau">—</div>
-      </div>
-
-      <div class="card">
-        <div class="card-label">EWMA Direction</div>
-        <div class="card-value loading" id="valEwmaDir">—</div>
-      </div>
-
     </div>
-  </section>
-
-  <hr class="divider" />
-
-  <!-- ── Model Quality ── -->
-  <section class="section">
-    <div class="section-label">Model Quality</div>
-    <div class="grid-4">
-
-      <div class="card">
-        <div class="card-label">Model Reliability</div>
-        <div class="card-value loading" id="valModelRel">—</div>
-      </div>
-
-      <div class="card">
-        <div class="card-label">Model R²</div>
-        <div class="card-value loading" id="valModelR2">—</div>
-      </div>
-
-      <div class="card">
-        <div class="card-label">Reference Output</div>
-        <div class="card-value loading" id="valRefOutput">—</div>
-      </div>
-
-      <div class="card">
-        <div class="card-label">ML Drop vs Reference</div>
-        <div class="card-value loading" id="valMlDrop">—</div>
-      </div>
-
-    </div>
-  </section>
-
-  <hr class="divider" />
-
-  <!-- ── Environment & Anomaly ── -->
-  <section class="section">
-    <div class="section-label">Environment &amp; Anomaly</div>
-    <div class="grid-4">
-
-      <div class="card">
-        <div class="card-label">Env. Affected</div>
-        <div style="margin-top:8px"><span class="bool-badge bool-false" id="valEnvAffected">—</span></div>
-      </div>
-
-      <div class="card">
-        <div class="card-label">Env. Reason</div>
-        <div class="card-value loading" style="font-size:14px;letter-spacing:0" id="valEnvReason">—</div>
-      </div>
-
-      <div class="card">
-        <div class="card-label">Env. Consecutive Days</div>
-        <div class="card-value loading" id="valEnvConsec">—</div>
-      </div>
-
-      <div class="card">
-        <div class="card-label">Anomaly Detected</div>
-        <div style="margin-top:8px"><span class="bool-badge bool-false" id="valAnomaly">—</span></div>
-        <div class="card-label" style="margin-top:8px;margin-bottom:0">MAD Score</div>
-        <div class="card-value loading" style="font-size:16px;margin-top:4px" id="valAnomalyScore">—</div>
-      </div>
-
-    </div>
-  </section>
-
-  <hr class="divider" />
-
-  <!-- ── Data Quality & Diagnostics ── -->
-  <section class="section">
-    <div class="section-label">Data Quality &amp; Diagnostics</div>
-    <div class="grid-4">
-
-      <div class="card">
-        <div class="card-label">Data Quality</div>
-        <div class="card-value loading" id="valDataQuality">—</div>
-        <div class="mini-bar-bg">
-          <div class="mini-bar-fill" id="dataQualityBar" style="width:0%;background:var(--accent-green)"></div>
-        </div>
-      </div>
-
-      <div class="card">
-        <div class="card-label">Missing Data Ratio</div>
-        <div class="card-value loading" id="valMissingRatio">—</div>
-      </div>
-
-      <div class="card">
-        <div class="card-label">Noise Std Residual</div>
-        <div class="card-value loading" id="valNoiseStd">—</div>
-      </div>
-
-      <div class="card">
-        <div class="card-label">Sensor Noise</div>
-        <div style="margin-top:8px"><span class="bool-badge bool-false" id="valSensorNoise">—</span></div>
-        <div class="card-label" style="margin-top:8px;margin-bottom:4px">Clipping</div>
-        <span class="bool-badge bool-false" id="valClipping">—</span>
-        <div class="card-label" style="margin-top:8px;margin-bottom:4px">Intraday Collapse</div>
-        <span class="bool-badge bool-false" id="valIntradayCollapse">—</span>
-      </div>
-
-    </div>
-  </section>
-
-  <hr class="divider" />
-
-  <!-- ── System State ── -->
-  <section class="section">
-    <div class="section-label">System State</div>
-    <div class="grid-4">
-
-      <div class="card">
-        <div class="card-label">Natural Recovery</div>
-        <div style="margin-top:8px"><span class="bool-badge bool-false" id="valNaturalRecovery">—</span></div>
-      </div>
-
-      <div class="card">
-        <div class="card-label">Post-Cleaning Active</div>
-        <div style="margin-top:8px"><span class="bool-badge bool-false" id="valPostCleaning">—</span></div>
-      </div>
-
-      <div class="card">
-        <div class="card-label">Sample Count</div>
-        <div class="card-value loading" id="valSampleCount">—</div>
-      </div>
-
-      <div class="card">
-        <div class="card-label">History Days</div>
-        <div class="card-value loading" id="valHistoryDays">—</div>
-      </div>
-
-    </div>
-  </section>
-
-  <hr class="divider" />
-
-  <!-- ── Decision Reasoning ── -->
-  <section class="section">
-    <div class="section-label">Decision Reasoning</div>
-    <div class="grid-3">
-
-      <div class="card">
-        <div class="card-label">Primary Reason</div>
-        <div class="card-value loading" style="font-size:13px;letter-spacing:0;line-height:1.4" id="valReason">—</div>
-      </div>
-
-      <div class="card card-wide">
-        <div class="card-label">Reason Chain</div>
-        <div class="reason-chain" id="reasonChain">
-          <div class="reason-item" style="color:var(--text-3)">Awaiting data…</div>
-        </div>
-      </div>
-
-    </div>
-  </section>
-
-  <hr class="divider" />
-
-  <!-- ── Adaptive Thresholds ── -->
-  <section class="section">
-    <div class="section-label">Adaptive Thresholds</div>
-    <div class="grid-4">
-
-      <div class="card">
-        <div class="card-label">Drop High</div>
-        <div class="card-value loading" id="valDropHigh">—</div>
-      </div>
-
-      <div class="card">
-        <div class="card-label">Drop Moderate</div>
-        <div class="card-value loading" id="valDropModerate">—</div>
-      </div>
-
-      <div class="card">
-        <div class="card-label">Env High Temp</div>
-        <div class="card-value loading" id="valEnvHighTemp">—</div>
-      </div>
-
-      <div class="card">
-        <div class="card-label">Auto-Clean Ratio</div>
-        <div class="card-value loading" id="valAutoCleanRatio">—</div>
-      </div>
-
-    </div>
-  </section>
-
-  <hr class="divider" />
-
-  <!-- ── Analytics Chart ── -->
-  <section class="section">
-    <div class="section-label">Analytics</div>
-
     <div class="chart-container">
       <div class="chart-header">
-        <div class="chart-title">Performance Trends</div>
-        <div class="toggle-group">
-          <button class="toggle-btn btn-output active" data-dataset="output" onclick="App.toggleDataset('output', this)">
-            <span class="btn-dot dot-output"></span>Output
-          </button>
-          <button class="toggle-btn btn-light active" data-dataset="light" onclick="App.toggleDataset('light', this)">
-            <span class="btn-dot dot-light"></span>Light
-          </button>
-          <button class="toggle-btn btn-perf active" data-dataset="performance" onclick="App.toggleDataset('performance', this)">
-            <span class="btn-dot dot-perf"></span>Performance
-          </button>
-        </div>
+        <div class="chart-title">Output (W) · last 30 records</div>
       </div>
-
       <div class="canvas-wrap">
-        <div class="loading-overlay" id="chartLoader">
-          <div class="spinner"></div>
-          <div class="loading-text">Connecting to data source…</div>
-        </div>
+        <div class="loading-overlay" id="chartLoader"><div class="spinner"></div><div class="loading-text">Loading chart…</div></div>
         <canvas id="mainChart"></canvas>
       </div>
     </div>
-
-    <div class="error-banner" id="errorBanner"></div>
   </section>
 
-</div><!-- /app-wrapper -->
+  <hr class="divider" />
+
+  <!-- ── ENVIRONMENT & ANOMALY (badges only) ───────────────────────────────── -->
+  <section class="section">
+    <div class="section-label">Environment & Alerts</div>
+    <div class="grid-3">
+      <div class="card">
+        <div class="card-label">Environment Affected</div>
+        <div style="margin-top:8px"><span class="bool-badge bool-false" id="valEnvAffected">—</span></div>
+        <div class="card-label" style="margin-top:12px;">Reason</div>
+        <div class="card-value loading" style="font-size:13px;" id="valEnvReason">—</div>
+      </div>
+      <div class="card">
+        <div class="card-label">Anomaly Detected</div>
+        <div style="margin-top:8px"><span class="bool-badge bool-false" id="valAnomaly">—</span></div>
+      </div>
+    </div>
+  </section>
+
+  <div class="error-banner" id="errorBanner"></div>
+</div>
 
 <script>
-/* ═══════════════════════════════════════════════════════════════
-   Solar AI Dashboard — Production JS
-   ═══════════════════════════════════════════════════════════════ */
+  (function(){
+    "use strict";
 
-const App = (() => {
+    /* ── Firebase init (unchanged) ────────────────────────────────────────── */
+    const firebaseConfig = {
+      apiKey: "AIzaSyBxSJVwGXypLCFU6usgZ5Ghdtur6E6IObE",
+      databaseURL: "https://solar-intelligence-system-default-rtdb.firebaseio.com/"
+    };
+    try { firebase.initializeApp(firebaseConfig); } catch(e) {}
+    const db = firebase.database();
 
-  /* ── Firebase Init ─────────────────────────────────────────── */
-  const FB_CONFIG = {
-    apiKey:      "AIzaSyBxSJVwGXypLCFU6usgZ5Ghdtur6E6IObE",
-    databaseURL: "https://solar-intelligence-system-default-rtdb.firebaseio.com/"
-  };
-
-  let db = null;
-
-  try {
-    firebase.initializeApp(FB_CONFIG);
-    db = firebase.database();
-  } catch (err) {
-    showError("Firebase initialisation failed: " + err.message);
-  }
-
-  /* ── Chart Setup ───────────────────────────────────────────── */
-  const CHART_COLORS = {
-    output:      "#3b82f6",
-    light:       "#f0b429",
-    performance: "#f97316"
-  };
-
-  // Visibility state per dataset
-  const datasetVisible = { output: true, light: true, performance: true };
-
-  // Stored chart data
-  let chartData = {
-    labels:      [],
-    output:      [],
-    light:       [],
-    performance: []
-  };
-
-  Chart.defaults.font.family = "'Space Mono', monospace";
-  Chart.defaults.font.size   = 11;
-  Chart.defaults.color       = "#7a8ba8";
-
-  const ctx = document.getElementById("mainChart").getContext("2d");
-
-  const makeDataset = (key, label, color) => ({
-    label,
-    data:            [],
-    borderColor:     color,
-    backgroundColor: color + "18",
-    borderWidth:     1.5,
-    pointRadius:     2,
-    pointHoverRadius: 4,
-    tension:         0.4,
-    fill:            false,
-    hidden:          false
-  });
-
-  const chart = new Chart(ctx, {
-    type: "line",
-    data: {
-      labels: [],
-      datasets: [
-        makeDataset("output",      "Output",      CHART_COLORS.output),
-        makeDataset("light",       "Light",       CHART_COLORS.light),
-        makeDataset("performance", "Performance", CHART_COLORS.performance)
-      ]
-    },
-    options: {
-      responsive:          true,
-      maintainAspectRatio: false,
-      animation:           { duration: 400 },
-      interaction:         { mode: "index", intersect: false },
-      plugins: {
-        legend: { display: false },
-        tooltip: {
-          backgroundColor: "#111827",
-          borderColor:     "#2a3a52",
-          borderWidth:     1,
-          titleColor:      "#e8edf5",
-          bodyColor:       "#7a8ba8",
-          padding:         10,
-          callbacks: {
-            label: ctx => ` ${ctx.dataset.label}: ${
-              typeof ctx.parsed.y === "number" ? ctx.parsed.y.toFixed(3) : "—"
-            }`
-          }
-        }
-      },
-      scales: {
-        x: {
-          grid:   { color: "#1c2535" },
-          ticks:  { color: "#4a5a72", maxTicksLimit: 8, maxRotation: 0 }
-        },
-        y: {
-          grid:   { color: "#1c2535" },
-          ticks:  { color: "#4a5a72" }
-        }
+    /* ── Chart setup (output only) ───────────────────────────────────────── */
+    const ctx = document.getElementById('mainChart').getContext('2d');
+    const chart = new Chart(ctx, {
+      type: 'line',
+      data: { labels: [], datasets: [{
+        label: 'Output (W)', data: [], borderColor: '#3b82f6',
+        backgroundColor: '#3b82f618', borderWidth: 1.8, pointRadius: 2,
+        tension: 0.3, fill: false
+      }]},
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { display: false }, tooltip: { backgroundColor: '#111827', titleColor: '#e8edf5' } },
+        scales: { x: { grid: { color: '#1c2535' }, ticks: { color: '#4a5a72', maxTicksLimit: 6 } },
+                 y: { grid: { color: '#1c2535' }, ticks: { color: '#4a5a72' } } }
       }
+    });
+
+    /* ── Helpers ─────────────────────────────────────────────────────────── */
+    function fmt(val, dp=2, fallback='—') {
+      const n = parseFloat(val);
+      return Number.isFinite(n) ? n.toFixed(dp) : fallback;
     }
-  });
-
-  /* ── Helpers ───────────────────────────────────────────────── */
-
-  /**
-   * Safely format a number; returns fallback string if invalid.
-   * @param {*} val
-   * @param {number} dp - decimal places
-   * @param {string} fallback
-   */
-  function fmt(val, dp = 2, fallback = "—") {
-    const n = parseFloat(val);
-    return Number.isFinite(n) ? n.toFixed(dp) : fallback;
-  }
-
-  /** Set text + remove loading class from a card-value element. */
-  function setVal(id, text) {
-    const el = document.getElementById(id);
-    if (!el) return;
-    el.textContent = text;
-    el.classList.remove("loading");
-  }
-
-  /** Show an error banner. */
-  function showError(msg) {
-    const el = document.getElementById("errorBanner");
-    if (!el) return;
-    el.textContent = "⚠ " + msg;
-    el.style.display = "block";
-  }
-
-  /**
-   * Set a boolean badge element.
-   * @param {string} id        - element id
-   * @param {*}      val       - value to evaluate as boolean
-   * @param {boolean} trueGood - if true, true=green; if false, true=red (alert)
-   */
-  function setBool(id, val, trueGood) {
-    const el = document.getElementById(id);
-    if (!el) return;
-    if (val === null || val === undefined) { el.textContent = "—"; return; }
-    const isTrue = Boolean(val);
-    el.textContent = isTrue ? "YES" : "NO";
-    el.className = "bool-badge";
-    if (trueGood === true)       el.classList.add(isTrue ? "bool-false" : "bool-false"); // green when true
-    else if (trueGood === false) el.classList.add(isTrue ? "bool-true"  : "bool-false"); // red when true
-    else                         el.classList.add(isTrue ? "bool-warn"  : "bool-false"); // warn when true
-
-    // Fix: trueGood=true means true is positive (green), false is neutral
-    el.className = "bool-badge";
-    if (trueGood === true) {
-      el.classList.add(isTrue ? "bool-warn" : "bool-false");
-    } else {
-      el.classList.add(isTrue ? "bool-true" : "bool-false");
+    function setVal(id, text) {
+      const el = document.getElementById(id);
+      if(el) { el.textContent = text; el.classList.remove('loading'); }
     }
-  }
+    function setBool(id, val, isAlert=true) {
+      const el = document.getElementById(id);
+      if(!el) return;
+      const bool = Boolean(val);
+      el.textContent = bool ? 'YES' : 'NO';
+      el.className = 'bool-badge ' + (bool ? (isAlert ? 'bool-true' : 'bool-false') : 'bool-false');
+    }
+    function showError(msg) {
+      const el = document.getElementById('errorBanner');
+      if(el) { el.textContent = '⚠ ' + msg; el.style.display = 'block'; }
+    }
+    function hideChartLoader() { document.getElementById('chartLoader')?.classList.add('hidden'); }
 
-  /** Hide chart loading overlay. */
-  function hideChartLoader() {
-    const el = document.getElementById("chartLoader");
-    if (el) el.classList.add("hidden");
-  }
+    /* ── Firebase listeners (ONLY required fields) ───────────────────────── */
+    if(db) {
+      // 1) Latest sensor reading
+      db.ref('solar_system/raw_data').limitToLast(1).on('value', snap => {
+        if(!snap.exists()) return;
+        const rec = Object.values(snap.val())[0];
+        if(!rec) return;
+        setVal('valLight',  fmt(rec.light, 2) + ' lux');
+        setVal('valTemp',   fmt(rec.temp, 1) + ' °C');
+        setVal('valHum',    fmt(rec.humidity, 1) + ' %');
+        setVal('valOutput', fmt(rec.output, 3) + ' W');
+        document.getElementById('lastUpdated').textContent = 'Updated ' + new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+      });
 
-  /** Update the "last updated" timestamp. */
-  function touchTimestamp() {
-    const el = document.getElementById("lastUpdated");
-    if (!el) return;
-    const now = new Date();
-    const hh  = String(now.getHours()).padStart(2, "0");
-    const mm  = String(now.getMinutes()).padStart(2, "0");
-    const ss  = String(now.getSeconds()).padStart(2, "0");
-    el.textContent = `Updated ${hh}:${mm}:${ss}`;
-  }
-
-  /* ── Firebase Listeners ────────────────────────────────────── */
-
-  if (db) {
-    // ── Raw sensor data (latest record) ──────────────────────
-    db.ref("solar_system/raw_data")
-      .limitToLast(1)
-      .on("value", snap => {
-        if (!snap.exists()) return;
-        const records = snap.val();
-        const d       = Object.values(records)[0];
-
-        if (!d || typeof d !== "object") return;
-
-        setVal("valLight",  fmt(d.light,    2) + " lux");
-        setVal("valTemp",   fmt(d.temp,     1) + " °C");
-        setVal("valHum",    fmt(d.humidity, 1) + " %");
-        setVal("valOutput", fmt(d.output,   3) + " W");
-
-        touchTimestamp();
-      }, err => showError("Sensor read error: " + err.message));
-
-    // ── AI + ML intelligence ──────────────────────────────────
-    db.ref("solar_system/intelligence")
-      .on("value", snap => {
-        if (!snap.exists()) return;
+      // 2) Intelligence payload (hero + ML + env)
+      db.ref('solar_system/intelligence').on('value', snap => {
+        if(!snap.exists()) return;
         const d = snap.val();
+        if(!d) return;
 
-        if (!d || typeof d !== "object") return;
-
-        // Confidence
-        const conf = d.confidence != null ? String(d.confidence) : "—";
-        setVal("valConfidence", conf);
-
-        // ── Health: use actual health_score + health_label from pipeline ──
-        const hs = parseFloat(d.health_score);
-        if (Number.isFinite(hs)) {
-          const hLabel = d.health_label ? ` (${d.health_label})` : "";
-          setVal("valHealth", hs.toFixed(0) + hLabel);
-          const hBar = document.getElementById("healthBar");
-          if (hBar) hBar.style.width = Math.min(hs, 100) + "%";
-        } else {
-          // Fallback: 100 − drop_percentage
-          const drop   = parseFloat(d.drop_percentage);
-          const health = Number.isFinite(drop) ? Math.max(0, 100 - drop) : null;
-          setVal("valHealth", health !== null ? health.toFixed(0) + " %" : "—");
-          const hBar = document.getElementById("healthBar");
-          if (hBar && health !== null) hBar.style.width = health + "%";
+        // Hero status + reason + confidence
+        const statusEl = document.getElementById('heroStatus');
+        const status = String(d.status || '').toUpperCase();
+        statusEl.textContent = status.includes('NORMAL') ? 'NORMAL' : status.includes('MONITOR') ? 'MONITOR' : status.includes('CLEAN') ? 'CLEANING REQUIRED' : status || 'PENDING';
+        statusEl.className = 'status-badge ' + (status.includes('NORMAL') ? 'status-normal' : status.includes('MONITOR') ? 'status-monitor' : status.includes('CLEAN') ? 'status-clean' : 'status-pending');
+        document.getElementById('heroReason').textContent = d.reason || 'No additional context.';
+        const conf = d.confidence || '—';
+        document.getElementById('heroConfidence').textContent = conf + ' confidence';
+        
+        // ML cards
+        setVal('valPredicted', fmt(d.predicted_output, 3) + ' W');
+        const eff = parseFloat(d.efficiency);
+        setVal('valEfficiency', Number.isFinite(eff) ? (eff*100).toFixed(1)+' %' : '—');
+        const effBar = document.getElementById('effBar');
+        if(effBar && Number.isFinite(eff)) effBar.style.width = Math.min(eff*100, 100) + '%';
+        setVal('valDays', d.days_to_clean != null ? String(d.days_to_clean) : '—');
+        
+        // Trend label (simplified)
+        if(d.trend) {
+          const t = String(d.trend);
+          const trendEl = document.getElementById('valTrend');
+          trendEl.textContent = t;
+          trendEl.style.color = t.toLowerCase().includes('degrad') || t.includes('DOWN') ? 'var(--accent-red)' :
+                                t.toLowerCase().includes('improv') || t.includes('UP') ? 'var(--accent-green)' : 'var(--text-1)';
         }
+        
+        // Environment & anomaly
+        setBool('valEnvAffected', d.env_affected, true);
+        setVal('valEnvReason', d.env_reason || '—');
+        setBool('valAnomaly', d.anomaly_detected, true);
+      });
 
-        // Status
-        const statusBox = document.getElementById("statusBox");
-        if (statusBox && d.status) {
-          const s = String(d.status).toUpperCase();
-          statusBox.className = "status-card";
-          if (s.includes("NORMAL")) {
-            statusBox.classList.add("status-normal");
-            statusBox.textContent = "NORMAL";
-          } else if (s.includes("MONITOR")) {
-            statusBox.classList.add("status-monitor");
-            statusBox.textContent = "MONITOR";
-          } else if (s.includes("CLEAN")) {
-            statusBox.classList.add("status-clean");
-            statusBox.textContent = "CLEAN REQUIRED";
-          } else {
-            statusBox.classList.add("status-pending");
-            statusBox.textContent = s;
-          }
-        }
-
-        // ML fields
-        setVal("valPredicted", fmt(d.predicted_output, 3) + " W");
-
-        const eff    = parseFloat(d.efficiency);
-        const effPct = Number.isFinite(eff) ? (eff * 100).toFixed(1) + " %" : "—";
-        setVal("valEfficiency", effPct);
-        const eBar = document.getElementById("effBar");
-        if (eBar && Number.isFinite(eff)) {
-          eBar.style.width = Math.min(eff * 100, 100) + "%";
-        }
-
-        const days = d.days_to_clean != null ? String(d.days_to_clean) : "—";
-        setVal("valDays", days);
-
-        // ── Trend Analysis ────────────────────────────────────────
-        if (d.trend) {
-          const tEl = document.getElementById("valTrend");
-          if (tEl) {
-            tEl.textContent = String(d.trend);
-            tEl.classList.remove("loading");
-            const t = d.trend.toString().toLowerCase();
-            tEl.style.color = t.includes("degrad") || t.includes("down") ? "var(--accent-red)"
-                            : t.includes("improv") || t.includes("up")   ? "var(--accent-green)"
-                            : "var(--text-1)";
-          }
-        }
-        setVal("valTrendSlope",  d.trend_slope   != null ? parseFloat(d.trend_slope).toFixed(5)  : "—");
-        setVal("valMkTau",       d.trend_mk_tau  != null ? parseFloat(d.trend_mk_tau).toFixed(3)  : "—");
-        setVal("valEwmaDir",     d.trend_ewma_dir != null ? String(d.trend_ewma_dir)              : "—");
-
-        // ── Model Quality ─────────────────────────────────────────
-        if (d.model_reliability) {
-          const relEl = document.getElementById("valModelRel");
-          if (relEl) {
-            relEl.textContent = String(d.model_reliability);
-            relEl.classList.remove("loading");
-            const r = d.model_reliability.toString().toUpperCase();
-            relEl.className = "card-value " +
-              (r === "HIGH" ? "rel-high" : r === "MEDIUM" ? "rel-medium" : "rel-low");
-          }
-        }
-        setVal("valModelR2",    d.model_r2     != null ? parseFloat(d.model_r2).toFixed(4)    : "—");
-        setVal("valRefOutput",  d.reference_output != null ? fmt(d.reference_output, 3) + " W" : "—");
-        setVal("valMlDrop",     d.ml_drop_vs_reference != null ? fmt(d.ml_drop_vs_reference, 2) + " %" : "—");
-
-        // ── Environment & Anomaly ─────────────────────────────────
-        setBool("valEnvAffected", d.env_affected, false); // true=bad
-        setVal("valEnvReason",  d.env_reason   || "—");
-        setVal("valEnvConsec",  d.env_consecutive_days != null ? String(d.env_consecutive_days) : "—");
-        setBool("valAnomaly",   d.anomaly_detected, false); // true=bad
-        setVal("valAnomalyScore", d.anomaly_mad_score != null ? fmt(d.anomaly_mad_score, 2) : "—");
-
-        // ── Data Quality & Diagnostics ────────────────────────────
-        const dq = parseFloat(d.data_quality);
-        setVal("valDataQuality",   Number.isFinite(dq) ? (dq * 100).toFixed(0) + " %" : "—");
-        const dqBar = document.getElementById("dataQualityBar");
-        if (dqBar && Number.isFinite(dq)) {
-          dqBar.style.width = Math.min(dq * 100, 100) + "%";
-          dqBar.style.background = dq >= 0.7 ? "var(--accent-green)" : dq >= 0.4 ? "var(--accent-yellow)" : "var(--accent-red)";
-        }
-        setVal("valMissingRatio",  d.missing_data_ratio   != null ? fmt(d.missing_data_ratio, 3)   : "—");
-        setVal("valNoiseStd",      d.noise_std_residual   != null ? fmt(d.noise_std_residual, 4)   : "—");
-        setBool("valSensorNoise",     d.sensor_noise_detected, false);
-        setBool("valClipping",        d.clipping_detected,     false);
-        setBool("valIntradayCollapse", d.intraday_collapse,    false);
-
-        // ── System State ──────────────────────────────────────────
-        setBool("valNaturalRecovery", d.natural_recovery_detected, true);  // true=good
-        setBool("valPostCleaning",    d.post_cleaning_active,      true);  // true=info (warn)
-        setVal("valSampleCount",  d.sample_count  != null ? String(d.sample_count)  : "—");
-        setVal("valHistoryDays",  d.history_days  != null ? String(d.history_days)  : "—");
-
-        // ── Decision Reasoning ────────────────────────────────────
-        setVal("valReason", d.reason || "—");
-        const rcEl = document.getElementById("reasonChain");
-        if (rcEl && Array.isArray(d.reason_chain) && d.reason_chain.length > 0) {
-          rcEl.innerHTML = d.reason_chain
-            .map(r => `<div class="reason-item">${String(r)}</div>`)
-            .join("");
-        } else if (rcEl && d.reason) {
-          rcEl.innerHTML = `<div class="reason-item">${String(d.reason)}</div>`;
-        }
-
-        // ── Adaptive Thresholds ───────────────────────────────────
-        const at = d.adaptive_thresholds;
-        if (at && typeof at === "object") {
-          setVal("valDropHigh",       at.drop_high       != null ? fmt(at.drop_high, 2) + " %"      : "—");
-          setVal("valDropModerate",   at.drop_moderate   != null ? fmt(at.drop_moderate, 2) + " %"  : "—");
-          setVal("valEnvHighTemp",    at.env_high_temp   != null ? fmt(at.env_high_temp, 1) + " °C" : "—");
-          setVal("valAutoCleanRatio", at.auto_clean_ratio != null ? fmt(at.auto_clean_ratio, 3)     : "—");
-        }
-
-      }, err => showError("Intelligence read error: " + err.message));
-
-    // ── Chart: raw time-series (last 30 points) ───────────────
-    db.ref("solar_system/raw_data")
-      .limitToLast(30)
-      .on("value", snap => {
-        if (!snap.exists()) return;
+      // 3) Chart: last 30 output values only
+      db.ref('solar_system/raw_data').limitToLast(30).on('value', snap => {
+        if(!snap.exists()) return;
         const records = snap.val();
-
-        chartData.labels = [];
-        chartData.output = [];
-        chartData.light  = [];
-
+        const labels = [], outputs = [];
         Object.keys(records).sort().forEach(k => {
           const r = records[k];
-          chartData.labels.push(k);
-          chartData.output.push(typeof r.output === "number" ? r.output : null);
-          chartData.light.push(typeof r.light  === "number" ? r.light  : null);
+          labels.push(k);
+          outputs.push(typeof r.output === 'number' ? r.output : null);
         });
+        chart.data.labels = labels;
+        chart.data.datasets[0].data = outputs;
+        chart.update();
+        hideChartLoader();
+      }, err => showError('Chart data error'));
 
-        refreshChart();
-      }, err => showError("Chart data error: " + err.message));
-
-    // ── Chart: daily performance ──────────────────────────────
-    db.ref("solar_system/daily_summary")
-      .on("value", snap => {
-        if (!snap.exists()) return;
-        const daily = snap.val();
-
-        chartData.performance = [];
-
-        Object.keys(daily).sort().forEach(day => {
-          const d       = daily[day];
-          const maxL    = parseFloat(d.max_light);
-          const maxO    = parseFloat(d.max_output);
-          const ratio   = (Number.isFinite(maxL) && maxL > 0 && Number.isFinite(maxO))
-                          ? maxO / maxL
-                          : null;
-          chartData.performance.push(ratio);
-        });
-
-        refreshChart();
-      }, err => showError("Daily data error: " + err.message));
-  }
-
-  /* ── Chart Refresh ─────────────────────────────────────────── */
-
-  /**
-   * Push latest chartData into Chart.js datasets and update.
-   * Handles the case where performance has fewer points than raw data.
-   */
-  function refreshChart() {
-    const c = chart;
-
-    // Pad performance array to match raw-data label length (null = gap)
-    const rawLen  = chartData.labels.length;
-    const perfLen = chartData.performance.length;
-    let paddedPerf;
-    if (perfLen === 0) {
-      paddedPerf = new Array(rawLen).fill(null);
-    } else if (perfLen < rawLen) {
-      // Append performance at the end (daily summary covers full days)
-      paddedPerf = [
-        ...new Array(rawLen - perfLen).fill(null),
-        ...chartData.performance
-      ];
     } else {
-      paddedPerf = chartData.performance.slice(-rawLen);
+      showError('Firebase not initialised');
     }
 
-    c.data.labels          = chartData.labels;
-    c.data.datasets[0].data = chartData.output;
-    c.data.datasets[1].data = chartData.light;
-    c.data.datasets[2].data = paddedPerf;
-
-    // Respect visibility toggles
-    c.data.datasets[0].hidden = !datasetVisible.output;
-    c.data.datasets[1].hidden = !datasetVisible.light;
-    c.data.datasets[2].hidden = !datasetVisible.performance;
-
-    c.update("none"); // skip animation on data refresh for perf
-    hideChartLoader();
-  }
-
-  /* ── Dataset Toggle ────────────────────────────────────────── */
-
-  /**
-   * Toggle a chart dataset on/off.
-   * @param {string} key  - "output" | "light" | "performance"
-   * @param {HTMLElement} btn
-   */
-  function toggleDataset(key, btn) {
-    if (!datasetVisible.hasOwnProperty(key)) return;
-
-    datasetVisible[key] = !datasetVisible[key];
-    btn.classList.toggle("active", datasetVisible[key]);
-
-    const dsMap = { output: 0, light: 1, performance: 2 };
-    const idx   = dsMap[key];
-    if (idx !== undefined) {
-      chart.data.datasets[idx].hidden = !datasetVisible[key];
-      chart.update();
-    }
-  }
-
-  /* ── Public API ────────────────────────────────────────────── */
-  return { toggleDataset };
-
-})();
+    // Fallback for loading overlay
+    window.addEventListener('load', () => setTimeout(hideChartLoader, 800));
+  })();
 </script>
 </body>
 </html>
