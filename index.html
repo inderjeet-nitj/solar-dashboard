@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Solar Intelligence · Decision Dashboard</title>
+  <title>Solar Panel Cleaning Alert · Simple Dashboard</title>
 
   <!-- Fonts & Libraries (unchanged) -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -128,9 +128,12 @@
     .status-clean   { background: var(--status-clean);   color: #fca5a5; }
     .status-pending { background: var(--surface-1);      color: var(--text-3); }
 
-    /* Efficiency bar */
+    /* Efficiency bar — reused for drop percentage */
     .eff-bar-bg { height: 4px; background: var(--border); border-radius: 2px; overflow: hidden; margin-top: 8px; }
     .eff-bar-fill { height: 100%; border-radius: 2px; background: var(--accent-blue); transition: width 0.6s; }
+    /* Adapt bar colour for drop */
+    .eff-bar-fill.warning { background: var(--accent-orange); }
+    .eff-bar-fill.danger { background: var(--accent-red); }
 
     /* Boolean badges */
     .bool-badge {
@@ -188,8 +191,8 @@
         <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="4" fill="#080c14"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41" stroke="#080c14" stroke-width="2" stroke-linecap="round"/></svg>
       </div>
       <div>
-        <h1>Solar Intelligence</h1>
-        <div class="header-sub">Decision‑Focused Monitoring</div>
+        <h1>Solar Cleaning Alert</h1>
+        <div class="header-sub">Simple Clear‑Day Baseline System</div>
       </div>
     </div>
     <div class="header-right">
@@ -211,17 +214,17 @@
 
   <hr class="divider" />
 
-  <!-- ── HERO SECTION: Status · Reason · Confidence ───────────────────────── -->
+  <!-- ── HERO SECTION: Cleaning Status ───────────────────────────────────── -->
   <section class="section">
-    <div class="section-label">System Decision</div>
+    <div class="section-label">Cleaning Decision</div>
     <div class="card" style="padding: 22px 20px;">
       <div style="display: flex; align-items: flex-start; justify-content: space-between; flex-wrap: wrap; gap: 16px;">
         <div>
           <span class="status-badge status-pending" id="heroStatus">AWAITING DATA</span>
-          <div class="reason-text" id="heroReason">Connecting to intelligence feed…</div>
+          <div class="reason-text" id="heroReason">Connecting to analysis feed…</div>
         </div>
         <div>
-          <span class="confidence-chip" id="heroConfidence">— confidence</span>
+          <span class="confidence-chip" id="heroConfidence">—</span>
         </div>
       </div>
     </div>
@@ -229,29 +232,33 @@
 
   <hr class="divider" />
 
-  <!-- ── ML INTELLIGENCE (3 cards) ─────────────────────────────────────────── -->
+  <!-- ── CORE DATA (3 cards) ───────────────────────────────────────────────── -->
   <section class="section">
-    <div class="section-label">Core Intelligence</div>
+    <div class="section-label">Daily Performance</div>
     <div class="grid-3">
-      <div class="card"><div class="card-label">Predicted Output</div><div class="card-value loading" id="valPredicted">—</div></div>
+      <div class="card"><div class="card-label">Today's Max Power</div><div class="card-value loading" id="valMaxPower">—</div></div>
       <div class="card">
-        <div class="card-label">Efficiency</div>
-        <div class="card-value loading" id="valEfficiency">—</div>
-        <div class="eff-bar-bg"><div class="eff-bar-fill" id="effBar" style="width:0%"></div></div>
+        <div class="card-label">Drop vs Baseline</div>
+        <div class="card-value loading" id="valDrop">—</div>
+        <div class="eff-bar-bg"><div class="eff-bar-fill" id="dropBar" style="width:0%"></div></div>
       </div>
-      <div class="card"><div class="card-label">Days to Clean</div><div class="card-value loading" id="valDays">—</div></div>
+      <div class="card"><div class="card-label">Consecutive Low Days</div><div class="card-value loading" id="valLowDays">—</div></div>
     </div>
   </section>
 
   <hr class="divider" />
 
-  <!-- ── TREND + CHART (simplified) ────────────────────────────────────────── -->
+  <!-- ── TREND + CHART ────────────────────────────────────────────────────── -->
   <section class="section">
-    <div class="section-label">Trend & Performance</div>
+    <div class="section-label">Trend & Output</div>
     <div class="grid-2" style="margin-bottom: 12px;">
       <div class="card">
-        <div class="card-label">Trend Direction</div>
+        <div class="card-label">Cleaning Alert</div>
         <div class="card-value loading" id="valTrend" style="font-size: 22px;">—</div>
+      </div>
+      <div class="card">
+        <div class="card-label">Baseline Power</div>
+        <div class="card-value loading" id="valBaseline">—</div>
       </div>
     </div>
     <div class="chart-container">
@@ -267,19 +274,23 @@
 
   <hr class="divider" />
 
-  <!-- ── ENVIRONMENT & ANOMALY (badges only) ───────────────────────────────── -->
+  <!-- ── CONDITIONS & BOOLEANS ────────────────────────────────────────────── -->
   <section class="section">
-    <div class="section-label">Environment & Alerts</div>
+    <div class="section-label">Conditions & Flags</div>
     <div class="grid-3">
       <div class="card">
-        <div class="card-label">Environment Affected</div>
-        <div style="margin-top:8px"><span class="bool-badge bool-false" id="valEnvAffected">—</span></div>
-        <div class="card-label" style="margin-top:12px;">Reason</div>
-        <div class="card-value loading" style="font-size:13px;" id="valEnvReason">—</div>
+        <div class="card-label">Clear Day Today</div>
+        <div style="margin-top:8px"><span class="bool-badge bool-false" id="valClearDay">—</span></div>
       </div>
       <div class="card">
-        <div class="card-label">Anomaly Detected</div>
-        <div style="margin-top:8px"><span class="bool-badge bool-false" id="valAnomaly">—</span></div>
+        <div class="card-label">Cloudy (Low Light)</div>
+        <div style="margin-top:8px"><span class="bool-badge bool-false" id="valCloudy">—</span></div>
+        <div class="card-label" style="margin-top:12px;">Max Illumination</div>
+        <div class="card-value loading" style="font-size:13px;" id="valMaxIllum">—</div>
+      </div>
+      <div class="card">
+        <div class="card-label">Data Quality</div>
+        <div class="card-value loading" style="font-size:13px;" id="valQuality">—</div>
       </div>
     </div>
   </section>
@@ -291,7 +302,7 @@
   (function(){
     "use strict";
 
-    /* ── Firebase init (unchanged) ────────────────────────────────────────── */
+    /* ── Firebase init (identical to your original) ───────────────────────── */
     const firebaseConfig = {
       apiKey: "AIzaSyBxSJVwGXypLCFU6usgZ5Ghdtur6E6IObE",
       databaseURL: "https://solar-intelligence-system-default-rtdb.firebaseio.com/"
@@ -299,7 +310,7 @@
     try { firebase.initializeApp(firebaseConfig); } catch(e) {}
     const db = firebase.database();
 
-    /* ── Chart setup (output only) ───────────────────────────────────────── */
+    /* ── Chart setup (unchanged) ──────────────────────────────────────────── */
     const ctx = document.getElementById('mainChart').getContext('2d');
     const chart = new Chart(ctx, {
       type: 'line',
@@ -325,12 +336,12 @@
       const el = document.getElementById(id);
       if(el) { el.textContent = text; el.classList.remove('loading'); }
     }
-    function setBool(id, val, isAlert=true) {
+    function setBool(id, val) {
       const el = document.getElementById(id);
       if(!el) return;
       const bool = Boolean(val);
       el.textContent = bool ? 'YES' : 'NO';
-      el.className = 'bool-badge ' + (bool ? (isAlert ? 'bool-true' : 'bool-false') : 'bool-false');
+      el.className = 'bool-badge ' + (bool ? 'bool-true' : 'bool-false');
     }
     function showError(msg) {
       const el = document.getElementById('errorBanner');
@@ -338,56 +349,78 @@
     }
     function hideChartLoader() { document.getElementById('chartLoader')?.classList.add('hidden'); }
 
-    /* ── Firebase listeners (ONLY required fields) ───────────────────────── */
+    /* ── Firebase listeners (adapted to SPCDS.py output) ─────────────────── */
     if(db) {
-      // 1) Latest sensor reading
+      // 1) Latest sensor reading (raw_data)
       db.ref('solar_system/raw_data').limitToLast(1).on('value', snap => {
         if(!snap.exists()) return;
+        // raw_data is stored by date, but limitToLast gives the latest added record
         const rec = Object.values(snap.val())[0];
         if(!rec) return;
         setVal('valLight',  fmt(rec.light, 2) + ' lux');
         setVal('valTemp',   fmt(rec.temp, 1) + ' °C');
         setVal('valHum',    fmt(rec.humidity, 1) + ' %');
         setVal('valOutput', fmt(rec.output, 3) + ' W');
-        document.getElementById('lastUpdated').textContent = 'Updated ' + new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+        document.getElementById('lastUpdated').textContent =
+          'Updated ' + new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
       });
 
-      // 2) Intelligence payload (hero + ML + env)
-      db.ref('solar_system/intelligence').on('value', snap => {
+      // 2) Analysis results (latest_analysis from SPCDS.py)
+      db.ref('solar_system/intelligence/latest_analysis').on('value', snap => {
         if(!snap.exists()) return;
         const d = snap.val();
         if(!d) return;
 
-        // Hero status + reason + confidence
-        const statusEl = document.getElementById('heroStatus');
-        const status = String(d.status || '').toUpperCase();
-        statusEl.textContent = status.includes('NORMAL') ? 'NORMAL' : status.includes('MONITOR') ? 'MONITOR' : status.includes('CLEAN') ? 'CLEANING REQUIRED' : status || 'PENDING';
-        statusEl.className = 'status-badge ' + (status.includes('NORMAL') ? 'status-normal' : status.includes('MONITOR') ? 'status-monitor' : status.includes('CLEAN') ? 'status-clean' : 'status-pending');
-        document.getElementById('heroReason').textContent = d.reason || 'No additional context.';
-        const conf = d.confidence || '—';
-        document.getElementById('heroConfidence').textContent = conf + ' confidence';
-        
-        // ML cards
-        setVal('valPredicted', fmt(d.predicted_output, 3) + ' W');
-        const eff = parseFloat(d.efficiency);
-        setVal('valEfficiency', Number.isFinite(eff) ? (eff*100).toFixed(1)+' %' : '—');
-        const effBar = document.getElementById('effBar');
-        if(effBar && Number.isFinite(eff)) effBar.style.width = Math.min(eff*100, 100) + '%';
-        setVal('valDays', d.days_to_clean != null ? String(d.days_to_clean) : '—');
-        
-        // Trend label (simplified)
-        if(d.trend) {
-          const t = String(d.trend);
-          const trendEl = document.getElementById('valTrend');
-          trendEl.textContent = t;
-          trendEl.style.color = t.toLowerCase().includes('degrad') || t.includes('DOWN') ? 'var(--accent-red)' :
-                                t.toLowerCase().includes('improv') || t.includes('UP') ? 'var(--accent-green)' : 'var(--text-1)';
+        // Hero section
+        const needsCleaning = Boolean(d.needs_cleaning);
+        const heroStatus = document.getElementById('heroStatus');
+        if (needsCleaning) {
+          heroStatus.textContent = 'CLEANING REQUIRED';
+          heroStatus.className = 'status-badge status-clean';
+        } else {
+          heroStatus.textContent = 'NORMAL';
+          heroStatus.className = 'status-badge status-normal';
         }
-        
-        // Environment & anomaly
-        setBool('valEnvAffected', d.env_affected, true);
-        setVal('valEnvReason', d.env_reason || '—');
-        setBool('valAnomaly', d.anomaly_detected, true);
+        const lowDays = d.consecutive_low_days || 0;
+        const baseline = parseFloat(d.baseline) || 0;
+        const todayMax = parseFloat(d.today_max_power) || 0;
+        const dropPct = baseline > 0 ? ((baseline - todayMax) / baseline * 100) : 0;
+        const reasonParts = [];
+        if (d.today_is_clear) reasonParts.push('Clear day');
+        else reasonParts.push('Cloudy day');
+        reasonParts.push(`Consecutive low days: ${lowDays}/${3}`);
+        if (needsCleaning) reasonParts.push(`Drop: ${fmt(dropPct,1)}%`);
+        document.getElementById('heroReason').textContent = reasonParts.join(' · ');
+        document.getElementById('heroConfidence').textContent =
+          needsCleaning ? 'ALERT ACTIVE' : 'SYSTEM OK';
+
+        // Core cards
+        setVal('valMaxPower', fmt(todayMax, 2) + ' W');
+        setVal('valDrop', fmt(dropPct, 1) + ' %');
+        setVal('valLowDays', String(lowDays));
+
+        // Drop bar (with warning colours)
+        const dropBar = document.getElementById('dropBar');
+        if (dropBar) {
+          const maxDrop = 30; // 30% as extreme
+          const fillPct = Math.min(Math.max(dropPct, 0), maxDrop) / maxDrop * 100;
+          dropBar.style.width = fillPct + '%';
+          dropBar.classList.remove('warning', 'danger');
+          if (dropPct > 20) dropBar.classList.add('danger');
+          else if (dropPct > 10) dropBar.classList.add('warning');
+        }
+
+        // Trend / alert
+        setVal('valTrend', needsCleaning ? 'TRIGGERED' : 'NOT ACTIVE');
+        const trendEl = document.getElementById('valTrend');
+        if (trendEl) trendEl.style.color = needsCleaning ? 'var(--accent-red)' : 'var(--accent-green)';
+        setVal('valBaseline', fmt(baseline, 2) + ' W');
+
+        // Boolean flags
+        setBool('valClearDay', d.today_is_clear);
+        setBool('valCloudy', !d.today_is_clear);
+        setVal('valMaxIllum', fmt(d.today_max_illumination, 0) + ' lux');
+        setVal('valQuality', `Baseline: ${fmt(baseline,2)} W · ${d.sample_count || '?'} samples`);
       });
 
       // 3) Chart: last 30 output values only
@@ -410,7 +443,6 @@
       showError('Firebase not initialised');
     }
 
-    // Fallback for loading overlay
     window.addEventListener('load', () => setTimeout(hideChartLoader, 800));
   })();
 </script>
